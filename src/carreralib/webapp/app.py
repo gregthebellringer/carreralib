@@ -38,6 +38,7 @@ class RaceManager:
         # Race tracking
         self.cars = {}  # address -> car data
         self.pace_car_deployed = False
+        self.last_start_light = 0  # Track last known start light state
 
         # Initialize car data for 8 controllers
         for i in range(8):
@@ -107,6 +108,7 @@ class RaceManager:
                 "last_timestamp": 0
             }
         self.pace_car_deployed = False
+        self.last_start_light = 0
 
     def start_race(self):
         """Start or resume the race."""
@@ -173,7 +175,7 @@ class RaceManager:
         """Get current race status."""
         status_data = {
             "connected": self.connected,
-            "start_light": 0,
+            "start_light": self.last_start_light,  # Use last known value
             "mode": 0,
             "pace_car_deployed": self.pace_car_deployed,
             "cars": []
@@ -183,6 +185,7 @@ class RaceManager:
             try:
                 result = self.poll()
                 if isinstance(result, ControlUnit.Status):
+                    self.last_start_light = result.start  # Store for next time
                     status_data["start_light"] = result.start
                     status_data["mode"] = result.mode
                     # Update fuel levels
@@ -191,6 +194,7 @@ class RaceManager:
                         self.cars[i]["in_pit"] = result.pit[i]
                 elif isinstance(result, ControlUnit.Timer):
                     self._process_timer_event(result)
+                    # Keep last known start_light value (already set above)
             except Exception as e:
                 logger.error(f"Error getting status: {e}")
 

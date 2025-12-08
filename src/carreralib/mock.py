@@ -13,6 +13,104 @@ from .connection import Connection, TimeoutError
 TimerEvent = namedtuple("TimerEvent", "address timestamp sector")
 
 
+class StartLight:
+    """Start light state constants."""
+    OFF = 0           # All lights off (idle/waiting)
+    RED_1 = 1         # First red light on
+    RED_2 = 2         # Lights 1-2 on
+    RED_3 = 3         # Lights 1-3 on
+    RED_4 = 4         # Lights 1-4 on
+    RED_5 = 5         # Lights 1-5 on
+    RED_ALL = 6       # All 5 red lights on (GET READY!)
+    GREEN = 7         # Green light (GO!)
+    RACE = 9          # Race in progress / lights off
+
+
+class StartLightSequence:
+    """Manages the start light countdown sequence.
+
+    The sequence progresses through these states:
+    - 0: All lights off (idle)
+    - 1-5: Red lights counting up (one per interval)
+    - 6: All red lights on (GET READY!)
+    - 7: Green light (GO!) - race timer starts here
+    - 9: Race in progress (lights off)
+    """
+
+    def __init__(self, state, red_interval=1.0, green_duration=0.5):
+        """Initialize start light sequence.
+
+        Args:
+            state: ControlUnitState to update.
+            red_interval: Time between red light steps in seconds.
+            green_duration: How long green light stays on before race starts.
+        """
+        self.state = state
+        self.red_interval = red_interval
+        self.green_duration = green_duration
+        self._running = False
+        self._thread = None
+        self._on_race_start = None  # Callback when race starts
+
+    def start(self, on_race_start=None):
+        """Start the countdown sequence.
+
+        Args:
+            on_race_start: Optional callback called when green light triggers.
+        """
+        if self._running:
+            return  # Already running
+
+        self._on_race_start = on_race_start
+        self._running = True
+        self.state.start = StartLight.OFF
+        self._thread = threading.Thread(target=self._run_sequence, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        """Stop the countdown sequence."""
+        self._running = False
+        if self._thread:
+            self._thread.join(timeout=1.0)
+            self._thread = None
+
+    def is_running(self):
+        """Check if sequence is currently running."""
+        return self._running
+
+    def _run_sequence(self):
+        """Run the countdown sequence."""
+        # Brief pause at OFF before starting countdown
+        time.sleep(self.red_interval)
+
+        # Count up red lights: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+        for light in range(StartLight.RED_1, StartLight.RED_ALL + 1):
+            if not self._running:
+                return
+            self.state.start = light
+            time.sleep(self.red_interval)
+
+        if not self._running:
+            return
+
+        # Green light - GO!
+        self.state.start = StartLight.GREEN
+        self.state.reset_timer()  # Timer starts at green light
+
+        # Call the race start callback
+        if self._on_race_start:
+            self._on_race_start()
+
+        time.sleep(self.green_duration)
+
+        if not self._running:
+            return
+
+        # Race in progress
+        self.state.start = StartLight.RACE
+        self._running = False
+
+
 class ControlUnitState:
     """Simulated state of a Carrera Control Unit."""
 
@@ -153,18 +251,26 @@ class RaceSimulator:
 class MockConnection(Connection):
     """Mock connection that simulates a Carrera Control Unit."""
 
-    def __init__(self, state=None):
+    def __init__(self, state=None, red_interval=1.0, green_duration=0.5):
         """Initialize mock connection.
 
         Args:
             state: Optional ControlUnitState instance. If None, creates a new one.
+            red_interval: Time between red light steps in seconds.
+            green_duration: How long green light stays on before race starts.
         """
         self.state = state or ControlUnitState()
         self._response_queue = queue.Queue()
+        self._startlight_sequence = StartLightSequence(
+            self.state,
+            red_interval=red_interval,
+            green_duration=green_duration
+        )
+        self._on_race_start = None  # Callback when race starts
 
     def close(self):
         """Close the connection."""
-        pass
+        self._startlight_sequence.stop()
 
     def recv(self, maxlength=None):
         """Receive a response from the simulated Control Unit."""
@@ -278,19 +384,19 @@ class MockConnection(Connection):
             _, button_id = protocol.unpack("cY", data[:-1])
 
             if button_id == 2:  # START/ENTER
-                if self.state.start == 0:
-                    # Start countdown sequence
-                    self.state.start = 1
-                elif self.state.start < 7:
-                    # Advance to next state (simplified - real CU has timing)
-                    self.state.start += 1
-                elif self.state.start >= 7:
-                    # Toggle pause
-                    self.state.start = 0 if self.state.start == 9 else 9
+                if self.state.start == StartLight.OFF:
+                    # Start the countdown sequence
+                    self._startlight_sequence.start(on_race_start=self._on_race_start)
+                elif self.state.start == StartLight.RACE:
+                    # Pause the race
+                    self._startlight_sequence.stop()
+                    self.state.start = StartLight.OFF
 
             elif button_id == 1:  # PACE CAR/ESC
-                # Toggle pace car (simplified)
-                pass
+                # ESC during countdown cancels it
+                if self._startlight_sequence.is_running():
+                    self._startlight_sequence.stop()
+                    self.state.start = StartLight.OFF
 
         except (protocol.ProtocolError, ValueError):
             pass
