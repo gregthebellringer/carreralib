@@ -189,8 +189,9 @@ class ClientHandler:
         try:
             response = self.mock.recv()
             if response:
-                # Send response with framing
-                framed = b'"' + response + b'$'
+                # Send response with end framing only (pyserial recv reads until $ or #)
+                # The leading " is NOT expected by SerialConnection.recv()
+                framed = response + b'$'
                 sock.sendall(framed)
                 logger.debug("Sent: %r", response)
         except Exception as e:

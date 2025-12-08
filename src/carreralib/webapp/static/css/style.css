@@ -1,0 +1,491 @@
+/* Carrera Race Management - Mobile-First Responsive CSS */
+
+:root {
+    /* Colors */
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #0f3460;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --accent-primary: #e94560;
+    --accent-success: #00d26a;
+    --accent-warning: #ffb800;
+    --accent-info: #00b4d8;
+    --accent-danger: #ff4757;
+
+    /* Light colors */
+    --light-off: #333;
+    --light-red: #ff0000;
+    --light-green: #00ff00;
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    /* Border radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 50%;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Reset */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+}
+
+/* App Container */
+.app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background: var(--bg-secondary);
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    transition: background-color 0.3s ease;
+}
+
+.status-dot.connected {
+    background: var(--accent-success);
+    box-shadow: 0 0 8px var(--accent-success);
+}
+
+.status-dot.disconnected {
+    background: var(--accent-danger);
+}
+
+/* Main Content */
+.main {
+    flex: 1;
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Panels */
+.panel {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-md);
+}
+
+.panel h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Connection Panel */
+.connection-panel .input-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.connection-panel input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--bg-secondary);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.connection-panel input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* Buttons */
+.button-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    min-height: 44px;
+    flex: 1;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn:not(:disabled):active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.btn-primary:not(:disabled):hover {
+    background: #d63050;
+}
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.btn-secondary:not(:disabled):hover {
+    background: #1e2d4d;
+}
+
+.btn-success {
+    background: var(--accent-success);
+    color: #000;
+}
+
+.btn-success:not(:disabled):hover {
+    background: #00b85c;
+}
+
+.btn-warning {
+    background: var(--accent-warning);
+    color: #000;
+}
+
+.btn-warning:not(:disabled):hover {
+    background: #e5a600;
+}
+
+.btn-info {
+    background: var(--accent-info);
+    color: #000;
+}
+
+.btn-info:not(:disabled):hover {
+    background: #009ec3;
+}
+
+.btn-large {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 1rem;
+    min-height: 56px;
+}
+
+.btn-icon {
+    font-size: 1.2em;
+}
+
+/* Start Lights */
+.lights-panel {
+    text-align: center;
+}
+
+.start-lights {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) 0;
+}
+
+.light {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--light-off);
+    border: 3px solid #555;
+    transition: all 0.3s ease;
+}
+
+.light.red {
+    background: var(--light-red);
+    box-shadow: 0 0 20px var(--light-red), 0 0 40px var(--light-red);
+}
+
+.light.green {
+    background: var(--light-green);
+    box-shadow: 0 0 20px var(--light-green), 0 0 40px var(--light-green);
+}
+
+.light-status {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.light-status.go {
+    color: var(--accent-success);
+    animation: pulse 0.5s ease infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Race Controls */
+.controls-panel .button-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.pace-car-group {
+    justify-content: center;
+}
+
+.pace-car-group .btn {
+    flex: 0 1 auto;
+    min-width: 200px;
+}
+
+/* Standings */
+.standings-panel {
+    flex: 1;
+}
+
+.standings-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.no-data {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: var(--spacing-xl);
+}
+
+.car-row {
+    display: grid;
+    grid-template-columns: 50px 1fr auto;
+    gap: var(--spacing-sm);
+    align-items: center;
+    background: var(--bg-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    transition: transform 0.3s ease;
+}
+
+.car-position {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.car-position.p1 { color: gold; }
+.car-position.p2 { color: silver; }
+.car-position.p3 { color: #cd7f32; }
+
+.car-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.car-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.car-stats {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.car-fuel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.fuel-bar {
+    width: 60px;
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.fuel-level {
+    height: 100%;
+    background: var(--accent-success);
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.fuel-level.low {
+    background: var(--accent-warning);
+}
+
+.fuel-level.critical {
+    background: var(--accent-danger);
+    animation: blink 0.5s ease infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.pit-indicator {
+    font-size: 0.625rem;
+    padding: 2px 6px;
+    background: var(--accent-info);
+    color: #000;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+/* Footer */
+.footer {
+    background: var(--bg-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.footer a {
+    color: var(--accent-primary);
+    text-decoration: none;
+}
+
+/* Tablet and Desktop */
+@media (min-width: 600px) {
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .main {
+        padding: var(--spacing-lg);
+        gap: var(--spacing-lg);
+    }
+
+    .panel {
+        padding: var(--spacing-lg);
+    }
+
+    .light {
+        width: 50px;
+        height: 50px;
+    }
+
+    .btn-large {
+        flex: 0 1 auto;
+        min-width: 150px;
+    }
+
+    .controls-panel .button-group {
+        justify-content: center;
+    }
+
+    .car-row {
+        grid-template-columns: 60px 1fr 100px;
+    }
+}
+
+@media (min-width: 900px) {
+    .main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .connection-panel {
+        grid-column: 1;
+    }
+
+    .lights-panel {
+        grid-column: 2;
+    }
+
+    .controls-panel {
+        grid-column: 1 / -1;
+    }
+
+    .standings-panel {
+        grid-column: 1 / -1;
+    }
+}
+
+/* PWA Standalone Mode */
+@media (display-mode: standalone) {
+    .header {
+        padding-top: env(safe-area-inset-top, var(--spacing-md));
+    }
+
+    .footer {
+        padding-bottom: env(safe-area-inset-bottom, var(--spacing-sm));
+    }
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="Carrera Race Management System">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Carrera Race Management</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/static/icons/icon-192.svg">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.svg">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <h1>Carrera Race Management</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot disconnected"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Connection Panel -->
+            <section class="panel connection-panel">
+                <h2>Connection</h2>
+                <div class="input-group">
+                    <input type="text" id="deviceUrl" placeholder="socket://localhost:5000" value="socket://localhost:5000">
+                </div>
+                <div class="button-group">
+                    <button id="btnConnect" class="btn btn-primary">Connect</button>
+                    <button id="btnDisconnect" class="btn btn-secondary" disabled>Disconnect</button>
+                    <button id="btnMock" class="btn btn-secondary">Use Mock</button>
+                </div>
+            </section>
+
+            <!-- Start Lights Panel -->
+            <section class="panel lights-panel">
+                <h2>Start Lights</h2>
+                <div class="start-lights" id="startLights">
+                    <div class="light" data-light="1"></div>
+                    <div class="light" data-light="2"></div>
+                    <div class="light" data-light="3"></div>
+                    <div class="light" data-light="4"></div>
+                    <div class="light" data-light="5"></div>
+                </div>
+                <div class="light-status" id="lightStatus">Waiting...</div>
+            </section>
+
+            <!-- Race Controls Panel -->
+            <section class="panel controls-panel">
+                <h2>Race Controls</h2>
+                <div class="button-group">
+                    <button id="btnStart" class="btn btn-success btn-large" disabled>
+                        <span class="btn-icon">▶</span>
+                        Start Race
+                    </button>
+                    <button id="btnPause" class="btn btn-warning btn-large" disabled>
+                        <span class="btn-icon">⏸</span>
+                        Pause
+                    </button>
+                </div>
+                <div class="button-group pace-car-group">
+                    <button id="btnPaceCar" class="btn btn-info" disabled>
+                        <span class="btn-icon">🚗</span>
+                        <span id="paceCarText">Deploy Pace Car</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Race Standings Panel -->
+            <section class="panel standings-panel">
+                <h2>Standings</h2>
+                <div class="standings-list" id="standingsList">
+                    <!-- Car standings will be populated here -->
+                    <div class="no-data">Connect to see race standings</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Carrera Race Management v1.0 | <a href="https://github.com/gregthebellringer/carreralib">carreralib</a></p>
+        </footer>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
