@@ -152,6 +152,7 @@ class RaceApp {
         if (data.type === 'status') {
             this.setConnected(data.connected);
             this.updateStartLights(data.start_light);
+            this.updateRaceButtons(data.start_light);
             this.updateStandings(data.cars);
             this.paceCarDeployed = data.pace_car_deployed;
             this.updatePaceCarButton();
@@ -178,13 +179,18 @@ class RaceApp {
             statusText.textContent = 'Disconnected';
         }
 
-        // Update buttons
+        // Update connection buttons
         this.elements.btnConnect.disabled = connected;
         this.elements.btnMock.disabled = connected;
         this.elements.btnDisconnect.disabled = !connected;
-        this.elements.btnStart.disabled = !connected;
-        this.elements.btnPause.disabled = !connected;
         this.elements.btnPaceCar.disabled = !connected;
+
+        // Set initial race button states (Start enabled, Pause disabled when connected)
+        // This will be updated by updateRaceButtons when status is received
+        if (!connected) {
+            this.elements.btnStart.disabled = true;
+            this.elements.btnPause.disabled = true;
+        }
     }
 
     updateStartLights(state) {
@@ -266,6 +272,22 @@ class RaceApp {
             this.elements.paceCarText.textContent = 'Deploy Pace Car';
             this.elements.btnPaceCar.classList.add('btn-info');
             this.elements.btnPaceCar.classList.remove('btn-warning');
+        }
+    }
+
+    updateRaceButtons(startLightState) {
+        if (!this.connected) {
+            // Both disabled when not connected
+            this.elements.btnStart.disabled = true;
+            this.elements.btnPause.disabled = true;
+        } else if (startLightState === 0) {
+            // Waiting (OFF) - can start, cannot pause
+            this.elements.btnStart.disabled = false;
+            this.elements.btnPause.disabled = true;
+        } else {
+            // Countdown (1-6), Green (7), or Race (9) - cannot start, can pause
+            this.elements.btnStart.disabled = true;
+            this.elements.btnPause.disabled = false;
         }
     }
 
