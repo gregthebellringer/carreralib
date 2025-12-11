@@ -218,7 +218,7 @@ class RaceApp {
 
         // Reset all lights
         lights.forEach(light => {
-            light.classList.remove('red', 'green', 'yellow', 'blink');
+            light.classList.remove('red', 'green', 'yellow', 'blink', 'blink-slow');
         });
         lightStatus.classList.remove('go');
 
@@ -257,8 +257,9 @@ class RaceApp {
             lightStatus.textContent = 'GO! GO! GO!';
             lightStatus.classList.add('go');
         } else if (state >= 8) {
-            // Race in progress - no text needed
-            lightStatus.textContent = '';
+            // Race in progress - slow blinking green lights
+            lights.forEach(light => light.classList.add('green', 'blink-slow'));
+            lightStatus.textContent = 'Race in progress';
         }
     }
 

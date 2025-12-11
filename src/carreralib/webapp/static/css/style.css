@@ -333,6 +333,21 @@ body {
     }
 }
 
+.light.green.blink-slow {
+    animation: greenBlinkSlow 2.5s ease infinite;
+}
+
+@keyframes greenBlinkSlow {
+    0%, 100% {
+        background: var(--light-green);
+        box-shadow: 0 0 20px var(--light-green), 0 0 40px var(--light-green);
+    }
+    50% {
+        background: var(--light-off);
+        box-shadow: none;
+    }
+}
+
 .light-status {
     font-size: 1.2rem;
     font-weight: 600;
