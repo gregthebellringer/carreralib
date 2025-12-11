@@ -39,6 +39,7 @@ class RaceManager:
         self.cars = {}  # address -> car data
         self.pace_car_deployed = False
         self.last_start_light = 0  # Track last known start light state
+        self.race_has_started = False  # Track if race has ever started
 
         # Initialize car data for 8 controllers
         for i in range(8):
@@ -109,6 +110,7 @@ class RaceManager:
             }
         self.pace_car_deployed = False
         self.last_start_light = 0
+        self.race_has_started = False
 
     def start_race(self):
         """Start or resume the race."""
@@ -116,6 +118,7 @@ class RaceManager:
             return False
         try:
             self.cu.start()
+            self.race_has_started = True
             if self.use_mock and self.simulator:
                 # Start simulation with cars 0-3
                 self.simulator.start(cars=[0, 1, 2, 3])
@@ -135,6 +138,23 @@ class RaceManager:
             return True
         except Exception as e:
             logger.error(f"Failed to pause race: {e}")
+            return False
+
+    def stop_race(self):
+        """Stop the race completely, resetting all timers and lap counts."""
+        if not self.connected or not self.cu:
+            return False
+        try:
+            # Pause if currently racing
+            if self.last_start_light > 0:
+                self.cu.start()  # Toggle to pause
+            if self.use_mock and self.simulator:
+                self.simulator.stop()
+            # Reset all race data
+            self._reset_race_data()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to stop race: {e}")
             return False
 
     def deploy_pace_car(self):
@@ -178,6 +198,7 @@ class RaceManager:
             "start_light": self.last_start_light,  # Use last known value
             "mode": 0,
             "pace_car_deployed": self.pace_car_deployed,
+            "race_has_started": self.race_has_started,
             "cars": []
         }
 
@@ -274,6 +295,12 @@ def create_app() -> FastAPI:
     async def pause_race():
         """Pause the race."""
         success = race_manager.pause_race()
+        return {"success": success}
+
+    @app.post("/api/race/stop")
+    async def stop_race():
+        """Stop the race and reset all timers."""
+        success = race_manager.stop_race()
         return {"success": success}
 
     @app.post("/api/pacecar/deploy")

@@ -12,6 +12,7 @@ class RaceApp {
         this.reconnectDelay = 1000;
         this.paceCarDeployed = false;
         this.currentStartLightState = 0;
+        this.raceHasStarted = false;
 
         // DOM Elements
         this.elements = {
@@ -22,6 +23,7 @@ class RaceApp {
             btnMock: document.getElementById('btnMock'),
             btnStart: document.getElementById('btnStart'),
             btnPause: document.getElementById('btnPause'),
+            btnStop: document.getElementById('btnStop'),
             btnPaceCar: document.getElementById('btnPaceCar'),
             paceCarText: document.getElementById('paceCarText'),
             pauseText: document.getElementById('pauseText'),
@@ -43,6 +45,7 @@ class RaceApp {
         this.elements.btnMock.addEventListener('click', () => this.connectMock());
         this.elements.btnStart.addEventListener('click', () => this.startRace());
         this.elements.btnPause.addEventListener('click', () => this.pauseRace());
+        this.elements.btnStop.addEventListener('click', () => this.stopRace());
         this.elements.btnPaceCar.addEventListener('click', () => this.togglePaceCar());
     }
 
@@ -92,6 +95,13 @@ class RaceApp {
 
     async pauseRace() {
         await this.apiCall('/race/pause');
+    }
+
+    async stopRace() {
+        const result = await this.apiCall('/race/stop');
+        if (result.success) {
+            this.raceHasStarted = false;
+        }
     }
 
     async togglePaceCar() {
@@ -157,6 +167,7 @@ class RaceApp {
             this.setConnected(data.connected);
             this.paceCarDeployed = data.pace_car_deployed;
             this.currentStartLightState = data.start_light;
+            this.raceHasStarted = data.race_has_started || false;
             this.updatePaceCarButton();
             this.updateStartLights(data.start_light);
             this.updateRaceButtons(data.start_light);
@@ -188,13 +199,13 @@ class RaceApp {
         this.elements.btnConnect.disabled = connected;
         this.elements.btnMock.disabled = connected;
         this.elements.btnDisconnect.disabled = !connected;
-        this.elements.btnPaceCar.disabled = !connected;
 
-        // Set initial race button states (Start enabled, Pause disabled when connected)
-        // This will be updated by updateRaceButtons when status is received
+        // Set initial race button states when not connected
         if (!connected) {
             this.elements.btnStart.disabled = true;
             this.elements.btnPause.disabled = true;
+            this.elements.btnStop.disabled = true;
+            this.elements.btnPaceCar.disabled = true;
         }
     }
 
@@ -218,7 +229,8 @@ class RaceApp {
         }
 
         if (state === 0) {
-            lightStatus.textContent = 'Waiting...';
+            // Show "Race is paused" if race has started, otherwise empty
+            lightStatus.textContent = this.raceHasStarted ? 'Race is paused' : '';
         } else if (state >= 1 && state <= 5) {
             // Red lights countdown
             for (let i = 0; i < state; i++) {
@@ -290,21 +302,50 @@ class RaceApp {
     }
 
     updateRaceButtons(startLightState) {
+        const { btnStart, btnPause, btnStop, btnPaceCar, pauseText } = this.elements;
+
         if (!this.connected) {
-            // Both disabled when not connected
-            this.elements.btnStart.disabled = true;
-            this.elements.btnPause.disabled = true;
-        } else if (startLightState === 0) {
-            // Waiting (OFF) - can start, cannot pause
-            this.elements.btnStart.disabled = false;
-            this.elements.btnPause.disabled = true;
-            // Show "Resume Race" if we were previously in a race
-            this.elements.pauseText.textContent = 'Resume Race';
+            // All disabled and hidden when not connected
+            btnStart.disabled = true;
+            btnPause.disabled = true;
+            btnStop.disabled = true;
+            btnPaceCar.disabled = true;
+            btnStart.classList.add('hidden');
+            btnPause.classList.add('hidden');
+            btnStop.classList.add('hidden');
+            btnPaceCar.classList.add('hidden');
+        } else if (startLightState === 0 && !this.raceHasStarted) {
+            // Not started yet - only show Start Race
+            btnStart.classList.remove('hidden');
+            btnStart.disabled = false;
+            btnPause.classList.add('hidden');
+            btnPause.disabled = true;
+            btnStop.classList.add('hidden');
+            btnStop.disabled = true;
+            btnPaceCar.classList.add('hidden');
+            btnPaceCar.disabled = true;
+        } else if (startLightState === 0 && this.raceHasStarted) {
+            // Paused - show Resume, Stop, and Pace Car
+            btnStart.classList.add('hidden');
+            btnStart.disabled = true;
+            btnPause.classList.remove('hidden');
+            btnPause.disabled = false;
+            pauseText.textContent = 'Resume Race';
+            btnStop.classList.remove('hidden');
+            btnStop.disabled = false;
+            btnPaceCar.classList.remove('hidden');
+            btnPaceCar.disabled = false;
         } else {
-            // Countdown (1-6), Green (7), or Race (9) - cannot start, can pause
-            this.elements.btnStart.disabled = true;
-            this.elements.btnPause.disabled = false;
-            this.elements.pauseText.textContent = 'Pause Race';
+            // Race in progress (countdown, green, or racing) - show Pause, Stop, Pace Car
+            btnStart.classList.add('hidden');
+            btnStart.disabled = true;
+            btnPause.classList.remove('hidden');
+            btnPause.disabled = false;
+            pauseText.textContent = 'Pause Race';
+            btnStop.classList.remove('hidden');
+            btnStop.disabled = false;
+            btnPaceCar.classList.remove('hidden');
+            btnPaceCar.disabled = false;
         }
     }
 
