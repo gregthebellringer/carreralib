@@ -517,16 +517,12 @@ body {
     .main {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto auto 1fr;
+        grid-template-rows: auto auto 1fr auto;
         gap: var(--spacing-lg);
     }
 
-    .connection-panel {
-        grid-column: 1;
-    }
-
     .lights-panel {
-        grid-column: 2;
+        grid-column: 1 / -1;
     }
 
     .controls-panel {
@@ -534,6 +530,10 @@ body {
     }
 
     .standings-panel {
+        grid-column: 1 / -1;
+    }
+
+    .connection-panel {
         grid-column: 1 / -1;
     }
 }

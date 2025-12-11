@@ -72,6 +72,7 @@ class RaceApp {
         const deviceUrl = this.elements.deviceUrl.value || 'socket://localhost:5000';
         const result = await this.apiCall(`/connect?device_url=${encodeURIComponent(deviceUrl)}`);
         if (result.success) {
+            this.raceHasStarted = false;
             this.setConnected(true);
         }
     }
@@ -79,6 +80,7 @@ class RaceApp {
     async disconnect() {
         const result = await this.apiCall('/disconnect');
         if (result.success) {
+            this.raceHasStarted = false;
             this.setConnected(false);
         }
     }
@@ -86,6 +88,7 @@ class RaceApp {
     async connectMock() {
         const result = await this.apiCall('/connect?use_mock=true');
         if (result.success) {
+            this.raceHasStarted = false;
             this.setConnected(true);
         }
     }
@@ -165,10 +168,13 @@ class RaceApp {
 
     handleWebSocketMessage(data) {
         if (data.type === 'status') {
-            this.setConnected(data.connected);
+            // Update state variables first, before any UI updates
             this.paceCarDeployed = data.pace_car_deployed;
             this.currentStartLightState = data.start_light;
             this.raceHasStarted = data.race_has_started || false;
+
+            // Now update UI
+            this.setConnected(data.connected);
             this.updatePaceCarButton();
             this.updateStartLights(data.start_light);
             this.updateRaceButtons(data.start_light);
@@ -201,13 +207,9 @@ class RaceApp {
         this.elements.btnMock.disabled = connected;
         this.elements.btnDisconnect.disabled = !connected;
 
-        // Set initial race button states when not connected
-        if (!connected) {
-            this.elements.btnStart.disabled = true;
-            this.elements.btnPause.disabled = true;
-            this.elements.btnStop.disabled = true;
-            this.elements.btnPaceCar.disabled = true;
-        }
+        // Update race buttons based on connection state
+        // Use currentStartLightState instead of hardcoded 0
+        this.updateRaceButtons(this.currentStartLightState);
     }
 
     updateStartLights(state) {

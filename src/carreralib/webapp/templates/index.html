@@ -26,19 +26,6 @@
 
         <!-- Main Content -->
         <main class="main">
-            <!-- Connection Panel -->
-            <section class="panel connection-panel">
-                <h2>Connection</h2>
-                <div class="input-group">
-                    <input type="text" id="deviceUrl" placeholder="socket://localhost:5000" value="socket://localhost:5000">
-                </div>
-                <div class="button-group">
-                    <button id="btnConnect" class="btn btn-primary">Connect</button>
-                    <button id="btnDisconnect" class="btn btn-secondary" disabled>Disconnect</button>
-                    <button id="btnMock" class="btn btn-secondary">Use Mock</button>
-                </div>
-            </section>
-
             <!-- Start Lights Panel -->
             <section class="panel lights-panel">
                 <h2>Start Lights</h2>
@@ -81,6 +68,19 @@
                 <div class="standings-list" id="standingsList">
                     <!-- Car standings will be populated here -->
                     <div class="no-data">Connect to see race standings</div>
+                </div>
+            </section>
+
+            <!-- Connection Panel -->
+            <section class="panel connection-panel">
+                <h2>Connection</h2>
+                <div class="input-group">
+                    <input type="text" id="deviceUrl" placeholder="socket://localhost:5000" value="socket://localhost:5000">
+                </div>
+                <div class="button-group">
+                    <button id="btnConnect" class="btn btn-primary">Connect</button>
+                    <button id="btnDisconnect" class="btn btn-secondary" disabled>Disconnect</button>
+                    <button id="btnMock" class="btn btn-secondary">Use Mock</button>
                 </div>
             </section>
         </main>

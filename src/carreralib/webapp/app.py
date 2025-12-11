@@ -202,12 +202,18 @@ class RaceManager:
 
     def get_status(self):
         """Get current race status."""
+        # For mock, use is_paused to determine if race has started
+        # A paused race means it was started before
+        race_started = self.race_has_started
+        if self.use_mock and self.mock_state:
+            race_started = self.mock_state.is_paused or self.last_start_light > 0
+
         status_data = {
             "connected": self.connected,
             "start_light": self.last_start_light,  # Use last known value
             "mode": 0,
             "pace_car_deployed": self.pace_car_deployed,
-            "race_has_started": self.race_has_started,
+            "race_has_started": race_started,
             "cars": []
         }
 
@@ -218,9 +224,12 @@ class RaceManager:
                     self.last_start_light = result.start  # Store for next time
                     status_data["start_light"] = result.start
                     status_data["mode"] = result.mode
-                    # Mark race as started once countdown begins
+                    # Update race_has_started based on actual state
                     if result.start > 0:
                         self.race_has_started = True
+                    # For mock, also check is_paused
+                    if self.use_mock and self.mock_state:
+                        status_data["race_has_started"] = self.mock_state.is_paused or result.start > 0
                     # Update fuel levels
                     for i, fuel in enumerate(result.fuel):
                         self.cars[i]["fuel"] = fuel
