@@ -229,8 +229,15 @@ class RaceApp {
         }
 
         if (state === 0) {
-            // Show "Race is paused" if race has started, otherwise empty
-            lightStatus.textContent = this.raceHasStarted ? 'Race is paused' : '';
+            // Show blinking red if race is paused, otherwise empty
+            if (this.raceHasStarted) {
+                lights.forEach(light => {
+                    light.classList.add('red', 'blink');
+                });
+                lightStatus.textContent = 'Race is paused';
+            } else {
+                lightStatus.textContent = '';
+            }
         } else if (state >= 1 && state <= 5) {
             // Red lights countdown
             for (let i = 0; i < state; i++) {
@@ -247,8 +254,8 @@ class RaceApp {
             lightStatus.textContent = 'GO! GO! GO!';
             lightStatus.classList.add('go');
         } else if (state >= 8) {
-            // Race in progress
-            lightStatus.textContent = 'Race in Progress';
+            // Race in progress - no text needed
+            lightStatus.textContent = '';
         }
     }
 

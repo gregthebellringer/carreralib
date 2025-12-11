@@ -256,6 +256,13 @@ body {
     min-height: 56px;
 }
 
+.btn-xlarge {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    font-size: 1.25rem;
+    min-height: 72px;
+    width: 100%;
+}
+
 .btn-icon {
     font-size: 1.2em;
 }
@@ -304,6 +311,21 @@ body {
     0%, 100% {
         background: var(--light-yellow);
         box-shadow: 0 0 20px var(--light-yellow), 0 0 40px var(--light-yellow);
+    }
+    50% {
+        background: var(--light-off);
+        box-shadow: none;
+    }
+}
+
+.light.red.blink {
+    animation: redBlink 0.5s ease infinite;
+}
+
+@keyframes redBlink {
+    0%, 100% {
+        background: var(--light-red);
+        box-shadow: 0 0 20px var(--light-red), 0 0 40px var(--light-red);
     }
     50% {
         background: var(--light-off);
