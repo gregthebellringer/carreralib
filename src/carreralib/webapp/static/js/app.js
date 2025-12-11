@@ -23,6 +23,7 @@ class RaceApp {
             btnPause: document.getElementById('btnPause'),
             btnPaceCar: document.getElementById('btnPaceCar'),
             paceCarText: document.getElementById('paceCarText'),
+            pauseText: document.getElementById('pauseText'),
             startLights: document.getElementById('startLights'),
             lightStatus: document.getElementById('lightStatus'),
             standingsList: document.getElementById('standingsList')
@@ -210,7 +211,7 @@ class RaceApp {
             for (let i = 0; i < state; i++) {
                 lights[i].classList.add('red');
             }
-            lightStatus.textContent = `Countdown: ${state}`;
+            lightStatus.textContent = `Countdown: ${6 - state}`;
         } else if (state === 6) {
             // All red lights
             lights.forEach(light => light.classList.add('red'));
@@ -284,10 +285,13 @@ class RaceApp {
             // Waiting (OFF) - can start, cannot pause
             this.elements.btnStart.disabled = false;
             this.elements.btnPause.disabled = true;
+            // Show "Resume Race" if we were previously in a race
+            this.elements.pauseText.textContent = 'Resume Race';
         } else {
             // Countdown (1-6), Green (7), or Race (9) - cannot start, can pause
             this.elements.btnStart.disabled = true;
             this.elements.btnPause.disabled = false;
+            this.elements.pauseText.textContent = 'Pause Race';
         }
     }
 
