@@ -11,6 +11,7 @@ class RaceApp {
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
         this.paceCarDeployed = false;
+        this.currentStartLightState = 0;
 
         // DOM Elements
         this.elements = {
@@ -99,12 +100,14 @@ class RaceApp {
             if (result.success) {
                 this.paceCarDeployed = false;
                 this.updatePaceCarButton();
+                this.updateStartLights(this.currentStartLightState);
             }
         } else {
             const result = await this.apiCall('/pacecar/deploy');
             if (result.success) {
                 this.paceCarDeployed = true;
                 this.updatePaceCarButton();
+                this.updateStartLights(this.currentStartLightState);
             }
         }
     }
@@ -152,11 +155,12 @@ class RaceApp {
     handleWebSocketMessage(data) {
         if (data.type === 'status') {
             this.setConnected(data.connected);
+            this.paceCarDeployed = data.pace_car_deployed;
+            this.currentStartLightState = data.start_light;
+            this.updatePaceCarButton();
             this.updateStartLights(data.start_light);
             this.updateRaceButtons(data.start_light);
             this.updateStandings(data.cars);
-            this.paceCarDeployed = data.pace_car_deployed;
-            this.updatePaceCarButton();
         } else if (data.type === 'timer') {
             // Timer events are already processed server-side
         }
@@ -200,9 +204,18 @@ class RaceApp {
 
         // Reset all lights
         lights.forEach(light => {
-            light.classList.remove('red', 'green');
+            light.classList.remove('red', 'green', 'yellow', 'blink');
         });
         lightStatus.classList.remove('go');
+
+        // Check if pace car is deployed - show blinking yellow
+        if (this.paceCarDeployed) {
+            lights.forEach(light => {
+                light.classList.add('yellow', 'blink');
+            });
+            lightStatus.textContent = 'Pace Car Deployed';
+            return;
+        }
 
         if (state === 0) {
             lightStatus.textContent = 'Waiting...';
