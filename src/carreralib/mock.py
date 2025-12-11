@@ -199,7 +199,9 @@ class RaceSimulator:
 
         self._active_cars = set(cars)
         self._running = True
-        self.state.start = 9  # Race in progress
+        # Only set race state when resuming - countdown sequence handles fresh starts
+        if resume:
+            self.state.start = 9  # Race in progress
 
         if not resume:
             self.state.reset_timer()

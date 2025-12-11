@@ -62,8 +62,11 @@ class RaceManager:
         try:
             if use_mock:
                 self.mock_state = ControlUnitState()
-                self.cu = ControlUnit(MockConnection(self.mock_state))
+                mock_conn = MockConnection(self.mock_state)
+                self.cu = ControlUnit(mock_conn)
                 self.simulator = RaceSimulator(self.mock_state)
+                # Set callback so simulator starts when countdown completes
+                mock_conn._on_race_start = lambda: self.simulator.start(cars=[0, 1, 2, 3])
                 self.use_mock = True
                 logger.info("Connected to mock Control Unit")
             else:
@@ -121,8 +124,10 @@ class RaceManager:
             self.cu.start()
             self.race_has_started = True
             if self.use_mock and self.simulator:
-                # Start simulation with cars 0-3 (resume=True if resuming)
-                self.simulator.start(cars=[0, 1, 2, 3], resume=is_resume)
+                if is_resume:
+                    # Resume simulation immediately
+                    self.simulator.start(cars=[0, 1, 2, 3], resume=True)
+                # For fresh starts, countdown sequence will trigger simulation via callback
             return True
         except Exception as e:
             logger.error(f"Failed to start race: {e}")
@@ -151,6 +156,9 @@ class RaceManager:
                 self.cu.start()  # Toggle to pause
             if self.use_mock and self.simulator:
                 self.simulator.stop()
+            # Reset mock's is_paused flag so next start does countdown
+            if self.use_mock and self.mock_state:
+                self.mock_state.is_paused = False
             # Reset all race data
             self._reset_race_data()
             return True
