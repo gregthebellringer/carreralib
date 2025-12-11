@@ -70,6 +70,36 @@
                 </div>
             </section>
 
+            <!-- Settings Panel -->
+            <section class="panel settings-panel">
+                <h2>Session Settings</h2>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label for="sessionType">Session Type</label>
+                        <select id="sessionType" class="select-input">
+                            <option value="R" selected>Race</option>
+                            <option value="Q">Qualifying</option>
+                            <option value="FP">Free Practice</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="raceType">Race Type</label>
+                        <select id="raceType" class="select-input">
+                            <option value="laps" selected>Lap Race</option>
+                            <option value="timed">Timed Race</option>
+                        </select>
+                    </div>
+                    <div class="setting-group" id="lapLimitGroup">
+                        <label for="lapLimit">Number of Laps</label>
+                        <input type="number" id="lapLimit" class="number-input" value="10" min="1" max="999">
+                    </div>
+                    <div class="setting-group hidden" id="timeLimitGroup">
+                        <label for="timeLimit">Race Duration (minutes)</label>
+                        <input type="number" id="timeLimit" class="number-input" value="10" min="1" max="999">
+                    </div>
+                </div>
+            </section>
+
             <!-- Connection Panel -->
             <section class="panel connection-panel">
                 <h2>Connection</h2>

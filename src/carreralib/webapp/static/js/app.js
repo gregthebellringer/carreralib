@@ -13,6 +13,10 @@ class RaceApp {
         this.paceCarDeployed = false;
         this.currentStartLightState = 0;
         this.raceHasStarted = false;
+        this.sessionType = 'R';
+        this.raceType = 'laps';
+        this.lapLimit = 10;
+        this.timeLimit = 600;
 
         // DOM Elements
         this.elements = {
@@ -30,7 +34,13 @@ class RaceApp {
             raceButtonGroup: document.getElementById('raceButtonGroup'),
             startLights: document.getElementById('startLights'),
             lightStatus: document.getElementById('lightStatus'),
-            standingsList: document.getElementById('standingsList')
+            standingsList: document.getElementById('standingsList'),
+            sessionType: document.getElementById('sessionType'),
+            raceType: document.getElementById('raceType'),
+            lapLimit: document.getElementById('lapLimit'),
+            timeLimit: document.getElementById('timeLimit'),
+            lapLimitGroup: document.getElementById('lapLimitGroup'),
+            timeLimitGroup: document.getElementById('timeLimitGroup')
         };
 
         // Bind event handlers
@@ -48,6 +58,10 @@ class RaceApp {
         this.elements.btnPause.addEventListener('click', () => this.pauseRace());
         this.elements.btnStop.addEventListener('click', () => this.stopRace());
         this.elements.btnPaceCar.addEventListener('click', () => this.togglePaceCar());
+        this.elements.sessionType.addEventListener('change', () => this.saveSettings());
+        this.elements.raceType.addEventListener('change', () => this.onRaceTypeChange());
+        this.elements.lapLimit.addEventListener('change', () => this.saveSettings());
+        this.elements.timeLimit.addEventListener('change', () => this.saveSettings());
     }
 
     // API Methods
@@ -126,6 +140,30 @@ class RaceApp {
         }
     }
 
+    async saveSettings() {
+        const sessionType = this.elements.sessionType.value;
+        const raceType = this.elements.raceType.value;
+        const lapLimit = parseInt(this.elements.lapLimit.value) || 10;
+        const timeLimit = (parseInt(this.elements.timeLimit.value) || 10) * 60; // Convert minutes to seconds
+        await this.apiCall(`/settings?session_type=${encodeURIComponent(sessionType)}&race_type=${encodeURIComponent(raceType)}&lap_limit=${lapLimit}&time_limit=${timeLimit}`);
+    }
+
+    onRaceTypeChange() {
+        this.updateRaceTypeVisibility();
+        this.saveSettings();
+    }
+
+    updateRaceTypeVisibility() {
+        const raceType = this.elements.raceType.value;
+        if (raceType === 'laps') {
+            this.elements.lapLimitGroup.classList.remove('hidden');
+            this.elements.timeLimitGroup.classList.add('hidden');
+        } else {
+            this.elements.lapLimitGroup.classList.add('hidden');
+            this.elements.timeLimitGroup.classList.remove('hidden');
+        }
+    }
+
     // WebSocket
     connectWebSocket() {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -172,6 +210,10 @@ class RaceApp {
             this.paceCarDeployed = data.pace_car_deployed;
             this.currentStartLightState = data.start_light;
             this.raceHasStarted = data.race_has_started || false;
+            this.sessionType = data.session_type || 'R';
+            this.raceType = data.race_type || 'laps';
+            this.lapLimit = data.lap_limit || 10;
+            this.timeLimit = data.time_limit || 600;
 
             // Now update UI
             this.setConnected(data.connected);
@@ -179,6 +221,7 @@ class RaceApp {
             this.updateStartLights(data.start_light);
             this.updateRaceButtons(data.start_light);
             this.updateStandings(data.cars);
+            this.updateSettingsUI();
         } else if (data.type === 'timer') {
             // Timer events are already processed server-side
         }
@@ -310,6 +353,34 @@ class RaceApp {
             this.elements.btnPaceCar.classList.add('btn-info');
             this.elements.btnPaceCar.classList.remove('btn-warning');
         }
+    }
+
+    updateSettingsUI() {
+        // Sync dropdowns and inputs with server state
+        if (this.elements.sessionType.value !== this.sessionType) {
+            this.elements.sessionType.value = this.sessionType;
+        }
+        if (this.elements.raceType.value !== this.raceType) {
+            this.elements.raceType.value = this.raceType;
+        }
+        // Convert seconds to minutes for display
+        const timeLimitMinutes = Math.round(this.timeLimit / 60);
+        if (parseInt(this.elements.lapLimit.value) !== this.lapLimit) {
+            this.elements.lapLimit.value = this.lapLimit;
+        }
+        if (parseInt(this.elements.timeLimit.value) !== timeLimitMinutes) {
+            this.elements.timeLimit.value = timeLimitMinutes;
+        }
+
+        // Update visibility based on race type
+        this.updateRaceTypeVisibility();
+
+        // Disable settings when race is in progress
+        const raceInProgress = this.raceHasStarted || this.currentStartLightState > 0;
+        this.elements.sessionType.disabled = raceInProgress;
+        this.elements.raceType.disabled = raceInProgress;
+        this.elements.lapLimit.disabled = raceInProgress;
+        this.elements.timeLimit.disabled = raceInProgress;
     }
 
     updateRaceButtons(startLightState) {

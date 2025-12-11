@@ -35,6 +35,12 @@ class RaceManager:
         self.simulator: Optional[RaceSimulator] = None
         self.use_mock = False
 
+        # Session settings
+        self.session_type = "R"  # R = Race, Q = Qualifying, FP = Free Practice
+        self.race_type = "laps"  # "laps" or "timed"
+        self.lap_limit = 10  # Number of laps for lap race (default: 10)
+        self.time_limit = 600  # Time in seconds for timed race (default: 10 minutes)
+
         # Race tracking
         self.cars = {}  # address -> car data
         self.pace_car_deployed = False
@@ -214,6 +220,10 @@ class RaceManager:
             "mode": 0,
             "pace_car_deployed": self.pace_car_deployed,
             "race_has_started": race_started,
+            "session_type": self.session_type,
+            "race_type": self.race_type,
+            "lap_limit": self.lap_limit,
+            "time_limit": self.time_limit,
             "cars": []
         }
 
@@ -335,6 +345,40 @@ def create_app() -> FastAPI:
         """Recall pace car."""
         success = race_manager.recall_pace_car()
         return {"success": success, "deployed": race_manager.pace_car_deployed}
+
+    @app.get("/api/settings")
+    async def get_settings():
+        """Get current session settings."""
+        return {
+            "session_type": race_manager.session_type,
+            "race_type": race_manager.race_type,
+            "lap_limit": race_manager.lap_limit,
+            "time_limit": race_manager.time_limit
+        }
+
+    @app.post("/api/settings")
+    async def save_settings(
+        session_type: str = None,
+        race_type: str = None,
+        lap_limit: int = None,
+        time_limit: int = None
+    ):
+        """Save session settings."""
+        if session_type is not None and session_type in ("R", "Q", "FP"):
+            race_manager.session_type = session_type
+        if race_type is not None and race_type in ("laps", "timed"):
+            race_manager.race_type = race_type
+        if lap_limit is not None and lap_limit > 0:
+            race_manager.lap_limit = lap_limit
+        if time_limit is not None and time_limit > 0:
+            race_manager.time_limit = time_limit
+        return {
+            "success": True,
+            "session_type": race_manager.session_type,
+            "race_type": race_manager.race_type,
+            "lap_limit": race_manager.lap_limit,
+            "time_limit": race_manager.time_limit
+        }
 
     @app.websocket("/ws/race")
     async def websocket_race(websocket: WebSocket):
