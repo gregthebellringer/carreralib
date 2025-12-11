@@ -122,12 +122,12 @@ class RaceManager:
         try:
             is_resume = self.race_has_started and self.last_start_light == 0
             self.cu.start()
-            self.race_has_started = True
-            if self.use_mock and self.simulator:
-                if is_resume:
-                    # Resume simulation immediately
+            # Only set race_has_started on resume - for fresh starts, it's set when countdown begins
+            if is_resume:
+                if self.use_mock and self.simulator:
                     self.simulator.start(cars=[0, 1, 2, 3], resume=True)
-                # For fresh starts, countdown sequence will trigger simulation via callback
+            # For fresh starts, countdown sequence will trigger simulation via callback
+            # race_has_started will be set when we see start_light > 0
             return True
         except Exception as e:
             logger.error(f"Failed to start race: {e}")
@@ -218,6 +218,9 @@ class RaceManager:
                     self.last_start_light = result.start  # Store for next time
                     status_data["start_light"] = result.start
                     status_data["mode"] = result.mode
+                    # Mark race as started once countdown begins
+                    if result.start > 0:
+                        self.race_has_started = True
                     # Update fuel levels
                     for i, fuel in enumerate(result.fuel):
                         self.cars[i]["fuel"] = fuel
