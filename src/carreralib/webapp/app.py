@@ -117,11 +117,12 @@ class RaceManager:
         if not self.connected or not self.cu:
             return False
         try:
+            is_resume = self.race_has_started and self.last_start_light == 0
             self.cu.start()
             self.race_has_started = True
             if self.use_mock and self.simulator:
-                # Start simulation with cars 0-3
-                self.simulator.start(cars=[0, 1, 2, 3])
+                # Start simulation with cars 0-3 (resume=True if resuming)
+                self.simulator.start(cars=[0, 1, 2, 3], resume=is_resume)
             return True
         except Exception as e:
             logger.error(f"Failed to start race: {e}")

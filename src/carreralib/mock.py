@@ -126,6 +126,7 @@ class ControlUnitState:
         self.mode = 0             # Mode bitmask
         self.pit = [False] * 8    # Pit lane status
         self.display = 8          # Number of drivers to display (6 or 8)
+        self.is_paused = False    # Track if race is paused (vs never started)
 
         # Timing
         self.timestamp = 0        # Current timestamp in ms
@@ -186,11 +187,12 @@ class RaceSimulator:
         self._active_cars = set()  # Cars currently racing
         self._car_next_lap = {}    # Next lap time for each car
 
-    def start(self, cars=None):
+    def start(self, cars=None, resume=False):
         """Start the race simulation.
 
         Args:
             cars: List of car addresses (0-7) to race. Default is [0, 1].
+            resume: If True, resume without resetting timer or reinitializing cars.
         """
         if cars is None:
             cars = [0, 1]
@@ -198,11 +200,18 @@ class RaceSimulator:
         self._active_cars = set(cars)
         self._running = True
         self.state.start = 9  # Race in progress
-        self.state.reset_timer()
 
-        # Initialize next lap times
-        for car in cars:
-            self._car_next_lap[car] = self._calculate_lap_time(car)
+        if not resume:
+            self.state.reset_timer()
+            # Initialize next lap times only on fresh start
+            for car in cars:
+                self._car_next_lap[car] = self._calculate_lap_time(car)
+        else:
+            # On resume, adjust next lap times based on current timestamp
+            current_time = self.state.get_timestamp() / 1000.0
+            for car in cars:
+                if car not in self._car_next_lap or self._car_next_lap[car] < current_time:
+                    self._car_next_lap[car] = current_time + self._calculate_lap_time(car)
 
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -212,7 +221,6 @@ class RaceSimulator:
         self._running = False
         if self._thread:
             self._thread.join(timeout=1.0)
-        self.state.start = 0
 
     def _run(self):
         """Main simulation loop."""
@@ -385,18 +393,25 @@ class MockConnection(Connection):
 
             if button_id == 2:  # START/ENTER
                 if self.state.start == StartLight.OFF:
-                    # Start the countdown sequence
-                    self._startlight_sequence.start(on_race_start=self._on_race_start)
+                    if self.state.is_paused:
+                        # Resume race instantly without countdown
+                        self.state.start = StartLight.RACE
+                        self.state.is_paused = False
+                    else:
+                        # Start the countdown sequence
+                        self._startlight_sequence.start(on_race_start=self._on_race_start)
                 elif self.state.start == StartLight.RACE:
                     # Pause the race
                     self._startlight_sequence.stop()
                     self.state.start = StartLight.OFF
+                    self.state.is_paused = True
 
             elif button_id == 1:  # PACE CAR/ESC
                 # ESC during countdown cancels it
                 if self._startlight_sequence.is_running():
                     self._startlight_sequence.stop()
                     self.state.start = StartLight.OFF
+                    self.state.is_paused = False
 
         except (protocol.ProtocolError, ValueError):
             pass

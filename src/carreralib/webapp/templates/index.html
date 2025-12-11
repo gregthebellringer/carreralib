@@ -55,22 +55,20 @@
             <!-- Race Controls Panel -->
             <section class="panel controls-panel">
                 <h2>Race Controls</h2>
-                <div class="button-group">
-                    <button id="btnStart" class="btn btn-success btn-xlarge" disabled>
-                        <span class="btn-icon">▶</span>
-                        Start Race
-                    </button>
-                    <button id="btnPause" class="btn btn-warning btn-large hidden" disabled>
+                <button id="btnStart" class="btn btn-success btn-xlarge" disabled>
+                    <span class="btn-icon">▶</span>
+                    Start Race
+                </button>
+                <div class="button-group race-buttons hidden" id="raceButtonGroup">
+                    <button id="btnPause" class="btn btn-warning btn-large" disabled>
                         <span class="btn-icon">⏸</span>
                         <span id="pauseText">Pause Race</span>
                     </button>
-                    <button id="btnStop" class="btn btn-danger btn-large hidden" disabled>
+                    <button id="btnStop" class="btn btn-danger btn-large" disabled>
                         <span class="btn-icon">⏹</span>
                         Stop Race
                     </button>
-                </div>
-                <div class="button-group pace-car-group">
-                    <button id="btnPaceCar" class="btn btn-info hidden" disabled>
+                    <button id="btnPaceCar" class="btn btn-info btn-large" disabled>
                         <span class="btn-icon">🚗</span>
                         <span id="paceCarText">Deploy Pace Car</span>
                     </button>

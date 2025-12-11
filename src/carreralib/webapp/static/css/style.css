@@ -351,16 +351,18 @@ body {
 
 /* Race Controls */
 .controls-panel .button-group {
-    margin-bottom: var(--spacing-md);
-}
-
-.pace-car-group {
     justify-content: center;
 }
 
-.pace-car-group .btn {
-    flex: 0 1 auto;
-    min-width: 200px;
+.race-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.race-buttons .btn {
+    flex: 1 1 auto;
+    min-width: 120px;
 }
 
 /* Standings */

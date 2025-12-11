@@ -27,6 +27,7 @@ class RaceApp {
             btnPaceCar: document.getElementById('btnPaceCar'),
             paceCarText: document.getElementById('paceCarText'),
             pauseText: document.getElementById('pauseText'),
+            raceButtonGroup: document.getElementById('raceButtonGroup'),
             startLights: document.getElementById('startLights'),
             lightStatus: document.getElementById('lightStatus'),
             standingsList: document.getElementById('standingsList')
@@ -309,7 +310,7 @@ class RaceApp {
     }
 
     updateRaceButtons(startLightState) {
-        const { btnStart, btnPause, btnStop, btnPaceCar, pauseText } = this.elements;
+        const { btnStart, btnPause, btnStop, btnPaceCar, pauseText, raceButtonGroup } = this.elements;
 
         if (!this.connected) {
             // All disabled and hidden when not connected
@@ -318,38 +319,27 @@ class RaceApp {
             btnStop.disabled = true;
             btnPaceCar.disabled = true;
             btnStart.classList.add('hidden');
-            btnPause.classList.add('hidden');
-            btnStop.classList.add('hidden');
-            btnPaceCar.classList.add('hidden');
+            raceButtonGroup.classList.add('hidden');
         } else if (startLightState === 0 && !this.raceHasStarted) {
-            // Not started yet - only show Start Race
+            // Not started yet - only show big Start Race button
             btnStart.classList.remove('hidden');
             btnStart.disabled = false;
-            btnPause.classList.add('hidden');
-            btnPause.disabled = true;
-            btnStop.classList.add('hidden');
-            btnStop.disabled = true;
-            btnPaceCar.classList.add('hidden');
-            btnPaceCar.disabled = true;
+            raceButtonGroup.classList.add('hidden');
         } else if (startLightState === 0 && this.raceHasStarted) {
-            // Paused - show Resume, Stop, and Pace Car
+            // Paused - show Resume and Stop (no Pace Car when paused)
             btnStart.classList.add('hidden');
-            btnStart.disabled = true;
-            btnPause.classList.remove('hidden');
+            raceButtonGroup.classList.remove('hidden');
             btnPause.disabled = false;
             pauseText.textContent = 'Resume Race';
-            btnStop.classList.remove('hidden');
             btnStop.disabled = false;
-            btnPaceCar.classList.remove('hidden');
-            btnPaceCar.disabled = false;
+            btnPaceCar.classList.add('hidden');
+            btnPaceCar.disabled = true;
         } else {
             // Race in progress (countdown, green, or racing) - show Pause, Stop, Pace Car
             btnStart.classList.add('hidden');
-            btnStart.disabled = true;
-            btnPause.classList.remove('hidden');
+            raceButtonGroup.classList.remove('hidden');
             btnPause.disabled = false;
             pauseText.textContent = 'Pause Race';
-            btnStop.classList.remove('hidden');
             btnStop.disabled = false;
             btnPaceCar.classList.remove('hidden');
             btnPaceCar.disabled = false;
