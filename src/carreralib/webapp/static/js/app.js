@@ -40,7 +40,9 @@ class RaceApp {
             lapLimit: document.getElementById('lapLimit'),
             timeLimit: document.getElementById('timeLimit'),
             lapLimitGroup: document.getElementById('lapLimitGroup'),
-            timeLimitGroup: document.getElementById('timeLimitGroup')
+            timeLimitGroup: document.getElementById('timeLimitGroup'),
+            startText: document.getElementById('startText'),
+            stopText: document.getElementById('stopText')
         };
 
         // Bind event handlers
@@ -381,6 +383,23 @@ class RaceApp {
         this.elements.raceType.disabled = raceInProgress;
         this.elements.lapLimit.disabled = raceInProgress;
         this.elements.timeLimit.disabled = raceInProgress;
+
+        // Update button labels based on session type
+        this.updateButtonLabels();
+    }
+
+    getSessionName() {
+        switch (this.sessionType) {
+            case 'Q': return 'Qualifying';
+            case 'FP': return 'Free Practice';
+            default: return 'Race';
+        }
+    }
+
+    updateButtonLabels() {
+        const name = this.getSessionName();
+        this.elements.startText.textContent = `Start ${name}`;
+        this.elements.stopText.textContent = `Stop ${name}`;
     }
 
     updateRaceButtons(startLightState) {
@@ -404,7 +423,7 @@ class RaceApp {
             btnStart.classList.add('hidden');
             raceButtonGroup.classList.remove('hidden');
             btnPause.disabled = false;
-            pauseText.textContent = 'Resume Race';
+            pauseText.textContent = `Resume ${this.getSessionName()}`;
             btnStop.disabled = false;
             btnPaceCar.classList.add('hidden');
             btnPaceCar.disabled = true;
@@ -413,7 +432,7 @@ class RaceApp {
             btnStart.classList.add('hidden');
             raceButtonGroup.classList.remove('hidden');
             btnPause.disabled = false;
-            pauseText.textContent = 'Pause Race';
+            pauseText.textContent = `Pause ${this.getSessionName()}`;
             btnStop.disabled = false;
             btnPaceCar.classList.remove('hidden');
             btnPaceCar.disabled = false;

@@ -60,7 +60,7 @@ class RaceManager:
                 "last_timestamp": 0
             }
 
-    def connect(self, device_url: str = None, use_mock: bool = False):
+    def connect(self, device_url: Optional[str] = None, use_mock: bool = False):
         """Connect to the Control Unit."""
         if self.connected:
             self.disconnect()
@@ -305,7 +305,7 @@ def create_app() -> FastAPI:
         return race_manager.get_status()
 
     @app.post("/api/connect")
-    async def connect(device_url: str = None, use_mock: bool = False):
+    async def connect(device_url: Optional[str] = None, use_mock: bool = False):
         """Connect to Control Unit."""
         success = race_manager.connect(device_url, use_mock)
         return {"success": success, "connected": race_manager.connected}
@@ -358,10 +358,10 @@ def create_app() -> FastAPI:
 
     @app.post("/api/settings")
     async def save_settings(
-        session_type: str = None,
-        race_type: str = None,
-        lap_limit: int = None,
-        time_limit: int = None
+        session_type: Optional[str] = None,
+        race_type: Optional[str] = None,
+        lap_limit: Optional[int] = None,
+        time_limit: Optional[int] = None
     ):
         """Save session settings."""
         if session_type is not None and session_type in ("R", "Q", "FP"):

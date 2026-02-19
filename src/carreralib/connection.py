@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class ConnectionError(Exception):
     """The base class of all connection exceptions."""
 
@@ -42,7 +45,7 @@ class Connection(object):
         interface as a complete message."""
         raise NotImplementedError
 
-    max_fwu_block_size = None
+    max_fwu_block_size: Optional[int] = None
     """Maximum number of bytes in one firmware update frame."""
 
 

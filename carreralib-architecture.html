@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>carreralib Architecture Explorer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 1fr auto;
+    height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    grid-row: 1 / 3;
+    background: #161822;
+    border-right: 1px solid #2d3148;
+    overflow-y: auto;
+    padding: 16px;
+  }
+
+  .sidebar h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+  }
+
+  .sidebar h2 {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 20px 0 8px;
+  }
+
+  /* Presets */
+  .preset-group { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .preset-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+    border: 1px solid #2d3148;
+    border-radius: 6px;
+    background: #1e2030;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .preset-btn:hover { border-color: #4f5b93; color: #e2e8f0; }
+  .preset-btn.active { border-color: #6366f1; color: #a5b4fc; background: #1e1b4b; }
+
+  /* Checkboxes */
+  .check-group { display: flex; flex-direction: column; gap: 4px; }
+
+  .check-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: #94a3b8; cursor: pointer;
+    padding: 3px 0;
+  }
+  .check-item input { accent-color: #6366f1; }
+  .check-item .color-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Comments */
+  .comment-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .comment-item {
+    background: #1e2030;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .comment-item .comment-target {
+    font-weight: 600; color: #a5b4fc; margin-bottom: 2px;
+  }
+  .comment-item .comment-file {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 10px; color: #64748b; margin-bottom: 6px;
+  }
+  .comment-item .comment-text { color: #cbd5e1; line-height: 1.4; }
+  .comment-item .comment-delete {
+    font-size: 10px; color: #64748b; cursor: pointer;
+    margin-top: 6px; text-align: right;
+  }
+  .comment-item .comment-delete:hover { color: #ef4444; }
+
+  .no-comments { font-size: 12px; color: #475569; font-style: italic; }
+
+  /* Canvas area */
+  .canvas-area {
+    position: relative;
+    overflow: hidden;
+    background: #0f1117;
+  }
+
+  .zoom-controls {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+  }
+  .zoom-btn {
+    width: 32px; height: 32px;
+    border: 1px solid #2d3148;
+    border-radius: 6px;
+    background: #161822;
+    color: #94a3b8;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .zoom-btn:hover { border-color: #4f5b93; color: #e2e8f0; }
+
+  svg { width: 100%; height: 100%; }
+
+  svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+  svg .mono { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; }
+
+  /* Legend */
+  .legend {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: #161822ee;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    padding: 10px 14px;
+    z-index: 10;
+  }
+  .legend-title {
+    font-size: 10px; font-weight: 600; color: #64748b;
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
+  }
+  .legend-items { display: flex; flex-wrap: wrap; gap: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #94a3b8; }
+  .legend-line {
+    width: 24px; height: 2px;
+  }
+
+  /* Prompt area */
+  .prompt-area {
+    background: #161822;
+    border-top: 1px solid #2d3148;
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-height: 180px;
+  }
+  .prompt-text {
+    flex: 1;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    max-height: 156px;
+  }
+  .copy-btn {
+    padding: 6px 14px;
+    border: 1px solid #2d3148;
+    border-radius: 6px;
+    background: #1e2030;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { border-color: #6366f1; color: #a5b4fc; }
+  .copy-btn.copied { border-color: #10b981; color: #34d399; }
+
+  /* Comment modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: #0009;
+    z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: #1e2030;
+    border: 1px solid #2d3148;
+    border-radius: 12px;
+    padding: 20px;
+    width: 400px;
+    max-width: 90vw;
+  }
+  .modal h3 { font-size: 14px; color: #e2e8f0; margin-bottom: 4px; }
+  .modal .modal-file {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px; color: #64748b; margin-bottom: 12px;
+  }
+  .modal textarea {
+    width: 100%;
+    height: 80px;
+    background: #0f1117;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 10px;
+    resize: vertical;
+  }
+  .modal textarea:focus { outline: none; border-color: #6366f1; }
+  .modal-actions {
+    display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;
+  }
+  .modal-btn {
+    padding: 6px 16px;
+    border: 1px solid #2d3148;
+    border-radius: 6px;
+    background: #161822;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .modal-btn:hover { border-color: #4f5b93; }
+  .modal-btn.primary { background: #4338ca; border-color: #4338ca; color: #fff; }
+  .modal-btn.primary:hover { background: #4f46e5; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h1>carreralib</h1>
+
+    <h2>View Presets</h2>
+    <div class="preset-group" id="presets"></div>
+
+    <h2>Layers</h2>
+    <div class="check-group" id="layer-checks"></div>
+
+    <h2>Connections</h2>
+    <div class="check-group" id="conn-checks"></div>
+
+    <h2 id="comments-heading">Comments (0)</h2>
+    <div class="comment-list" id="comments">
+      <div class="no-comments">Click a component to add feedback</div>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-area" id="canvas-area">
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomIn()">+</button>
+      <button class="zoom-btn" onclick="zoomOut()">&minus;</button>
+      <button class="zoom-btn" onclick="zoomReset()" style="font-size:11px">1:1</button>
+    </div>
+    <svg id="diagram" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="legend">
+      <div class="legend-title">Connections</div>
+      <div class="legend-items" id="legend-items"></div>
+    </div>
+  </div>
+
+  <!-- Prompt -->
+  <div class="prompt-area">
+    <div class="prompt-text" id="prompt-text">Add comments to components to generate a prompt.</div>
+    <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy</button>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <div class="modal-file" id="modal-file"></div>
+    <textarea id="modal-input" placeholder="Describe what you want to change or improve..."></textarea>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveComment()">Add Comment</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────
+
+const LAYERS = {
+  browser:    { label: 'Browser / UI',    color: '#1e3a5f', fill: '#172554', text: '#93c5fd' },
+  webapp:     { label: 'Web Server',       color: '#4a3728', fill: '#2a1f14', text: '#fbbf24' },
+  core:       { label: 'Core API',         color: '#3b1f5e', fill: '#1e1145', text: '#c4b5fd' },
+  connection: { label: 'Connection Layer', color: '#1a4032', fill: '#0d2818', text: '#6ee7b7' },
+  hardware:   { label: 'Hardware / Infra', color: '#3b2020', fill: '#1f1010', text: '#fca5a5' },
+  entry:      { label: 'Entry Points',     color: '#2d2d3d', fill: '#191925', text: '#a5b4fc' },
+};
+
+const CONN_TYPES = {
+  'data-flow':  { label: 'Data Flow',       color: '#3b82f6', dash: '' },
+  'import':     { label: 'Import / Depend', color: '#6b7280', dash: '4,3' },
+  'websocket':  { label: 'WebSocket',       color: '#8b5cf6', dash: '8,4' },
+  'http':       { label: 'HTTP / REST',     color: '#f97316', dash: '6,3' },
+  'binary':     { label: 'Binary Protocol', color: '#10b981', dash: '' },
+};
+
+const nodes = [
+  // Browser / UI layer (y: 30)
+  { id: 'html',    label: 'index.html',     subtitle: 'webapp/templates/',    x: 120, y: 30, w: 140, h: 48, layer: 'browser' },
+  { id: 'appjs',   label: 'RaceApp',        subtitle: 'webapp/static/js/app.js', x: 320, y: 30, w: 140, h: 48, layer: 'browser' },
+  { id: 'css',     label: 'style.css',      subtitle: 'webapp/static/css/',   x: 520, y: 30, w: 130, h: 48, layer: 'browser' },
+
+  // Web Server layer (y: 140)
+  { id: 'fastapi', label: 'FastAPI App',    subtitle: 'webapp/app.py',        x: 120, y: 140, w: 140, h: 48, layer: 'webapp' },
+  { id: 'racemgr', label: 'RaceManager',    subtitle: 'webapp/app.py',        x: 320, y: 140, w: 150, h: 48, layer: 'webapp' },
+  { id: 'ws',      label: 'WebSocket /ws/race', subtitle: 'webapp/app.py',    x: 540, y: 140, w: 175, h: 48, layer: 'webapp' },
+
+  // Core API layer (y: 250)
+  { id: 'cu',      label: 'ControlUnit',    subtitle: 'cu.py',               x: 220, y: 250, w: 155, h: 48, layer: 'core' },
+  { id: 'proto',   label: 'Protocol',       subtitle: 'protocol.py',         x: 440, y: 250, w: 140, h: 48, layer: 'core' },
+
+  // Connection layer (y: 360)
+  { id: 'conn',    label: 'Connection',     subtitle: 'connection.py (ABC)', x: 100, y: 360, w: 155, h: 48, layer: 'connection' },
+  { id: 'serial',  label: 'SerialConnection', subtitle: 'serial.py',        x: 310, y: 360, w: 165, h: 48, layer: 'connection' },
+  { id: 'ble',     label: 'BLEConnection',  subtitle: 'ble.py',             x: 530, y: 360, w: 155, h: 48, layer: 'connection' },
+  { id: 'mock',    label: 'MockConnection', subtitle: 'mock.py',            x: 100, y: 440, w: 160, h: 48, layer: 'connection' },
+  { id: 'sim',     label: 'RaceSimulator',  subtitle: 'mock.py',            x: 310, y: 440, w: 155, h: 48, layer: 'connection' },
+  { id: 'startseq',label: 'StartLightSequence', subtitle: 'mock.py',        x: 530, y: 440, w: 175, h: 48, layer: 'connection' },
+
+  // Hardware / Infra layer (y: 550)
+  { id: 'cuhw',    label: 'Carrera CU',     subtitle: 'USB / BLE hardware',  x: 220, y: 550, w: 145, h: 48, layer: 'hardware' },
+  { id: 'tcpsrv',  label: 'TCP Server',     subtitle: 'server.py',           x: 440, y: 550, w: 140, h: 48, layer: 'hardware' },
+
+  // Entry Points (y: 550, right side)
+  { id: 'main',    label: 'Curses RMS',     subtitle: '__main__.py',          x: 670, y: 250, w: 140, h: 48, layer: 'entry' },
+  { id: 'fw',      label: 'FW Updater',     subtitle: 'fw.py',               x: 670, y: 320, w: 140, h: 48, layer: 'entry' },
+  { id: 'webmain', label: 'Web Entry',      subtitle: 'webapp/__main__.py',  x: 670, y: 140, w: 140, h: 48, layer: 'entry' },
+];
+
+const connections = [
+  // Browser internal
+  { from: 'html', to: 'appjs', type: 'import', label: '<script>' },
+  { from: 'html', to: 'css', type: 'import', label: '<link>' },
+
+  // Browser <-> Server
+  { from: 'appjs', to: 'fastapi', type: 'http', label: 'REST API' },
+  { from: 'ws', to: 'appjs', type: 'websocket', label: 'status JSON' },
+
+  // Server internal
+  { from: 'fastapi', to: 'racemgr', type: 'import', label: 'routes call' },
+  { from: 'ws', to: 'racemgr', type: 'import', label: 'poll loop' },
+  { from: 'webmain', to: 'fastapi', type: 'import', label: 'uvicorn' },
+
+  // Server -> Core
+  { from: 'racemgr', to: 'cu', type: 'data-flow', label: 'poll/start/stop' },
+
+  // Core internal
+  { from: 'cu', to: 'proto', type: 'import', label: 'pack/unpack' },
+  { from: 'cu', to: 'conn', type: 'import', label: 'open(device)' },
+
+  // Connection layer
+  { from: 'conn', to: 'serial', type: 'import', label: 'factory' },
+  { from: 'conn', to: 'ble', type: 'import', label: 'factory' },
+  { from: 'mock', to: 'conn', type: 'import', label: 'extends' },
+  { from: 'mock', to: 'proto', type: 'import', label: 'decode cmds' },
+  { from: 'sim', to: 'mock', type: 'data-flow', label: 'timer events' },
+  { from: 'startseq', to: 'mock', type: 'data-flow', label: 'light state' },
+  { from: 'racemgr', to: 'mock', type: 'import', label: 'mock mode' },
+  { from: 'racemgr', to: 'sim', type: 'import', label: 'mock mode' },
+
+  // Hardware connections
+  { from: 'serial', to: 'cuhw', type: 'binary', label: 'USB 19200 baud' },
+  { from: 'ble', to: 'cuhw', type: 'binary', label: 'GATT' },
+  { from: 'serial', to: 'tcpsrv', type: 'binary', label: 'socket://' },
+  { from: 'tcpsrv', to: 'mock', type: 'import', label: 'uses state' },
+
+  // Entry points
+  { from: 'main', to: 'cu', type: 'import', label: 'ControlUnit' },
+  { from: 'fw', to: 'cu', type: 'import', label: 'ControlUnit' },
+];
+
+const PRESETS = {
+  'Full System': { layers: Object.keys(LAYERS), conns: Object.keys(CONN_TYPES) },
+  'Data Flow':   { layers: ['browser','webapp','core','connection','hardware'], conns: ['data-flow','binary','websocket','http'] },
+  'Web App':     { layers: ['browser','webapp','core','entry'], conns: ['http','websocket','import','data-flow'] },
+  'Hardware':    { layers: ['core','connection','hardware'], conns: ['binary','import','data-flow'] },
+  'Mock Stack':  { layers: ['webapp','core','connection','hardware'], conns: ['data-flow','import'] },
+};
+
+// ── State ─────────────────────────────────────────────────────────────
+
+const state = {
+  preset: 'Full System',
+  layers: {},
+  conns: {},
+  comments: [],
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  modalTarget: null,
+};
+
+// Init state
+Object.keys(LAYERS).forEach(k => state.layers[k] = true);
+Object.keys(CONN_TYPES).forEach(k => state.conns[k] = true);
+
+// ── Controls ──────────────────────────────────────────────────────────
+
+function buildControls() {
+  // Presets
+  const presetsEl = document.getElementById('presets');
+  Object.keys(PRESETS).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn' + (name === state.preset ? ' active' : '');
+    btn.textContent = name;
+    btn.dataset.preset = name;
+    btn.onclick = () => applyPreset(name);
+    presetsEl.appendChild(btn);
+  });
+
+  // Layer checkboxes
+  const layerEl = document.getElementById('layer-checks');
+  Object.entries(LAYERS).forEach(([id, layer]) => {
+    const label = document.createElement('label');
+    label.className = 'check-item';
+    const dot = document.createElement('span');
+    dot.className = 'color-dot';
+    dot.style.background = layer.color;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.onchange = () => { state.layers[id] = cb.checked; state.preset = null; updateAll(); };
+    label.appendChild(cb);
+    label.appendChild(dot);
+    label.appendChild(document.createTextNode(' ' + layer.label));
+    layerEl.appendChild(label);
+  });
+
+  // Connection checkboxes
+  const connEl = document.getElementById('conn-checks');
+  Object.entries(CONN_TYPES).forEach(([id, ct]) => {
+    const label = document.createElement('label');
+    label.className = 'check-item';
+    const dot = document.createElement('span');
+    dot.className = 'color-dot';
+    dot.style.background = ct.color;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.onchange = () => { state.conns[id] = cb.checked; state.preset = null; updateAll(); };
+    label.appendChild(cb);
+    label.appendChild(dot);
+    label.appendChild(document.createTextNode(' ' + ct.label));
+    connEl.appendChild(label);
+  });
+
+  // Legend
+  const legendEl = document.getElementById('legend-items');
+  Object.entries(CONN_TYPES).forEach(([id, ct]) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.dataset.conn = id;
+    const line = document.createElement('span');
+    line.className = 'legend-line';
+    line.style.background = ct.color;
+    if (ct.dash) {
+      line.style.background = 'none';
+      line.style.borderTop = `2px dashed ${ct.color}`;
+    }
+    item.appendChild(line);
+    item.appendChild(document.createTextNode(ct.label));
+    legendEl.appendChild(item);
+  });
+}
+
+function applyPreset(name) {
+  state.preset = name;
+  const p = PRESETS[name];
+  Object.keys(LAYERS).forEach(k => state.layers[k] = p.layers.includes(k));
+  Object.keys(CONN_TYPES).forEach(k => state.conns[k] = p.conns.includes(k));
+
+  // Sync checkboxes
+  document.querySelectorAll('#layer-checks input').forEach((cb, i) => {
+    cb.checked = state.layers[Object.keys(LAYERS)[i]];
+  });
+  document.querySelectorAll('#conn-checks input').forEach((cb, i) => {
+    cb.checked = state.conns[Object.keys(CONN_TYPES)[i]];
+  });
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === name);
+  });
+
+  updateAll();
+}
+
+// ── Zoom & Pan ────────────────────────────────────────────────────────
+
+let isPanning = false, panStartX, panStartY;
+
+function zoomIn()    { state.zoom = Math.min(state.zoom * 1.2, 3); updateAll(); }
+function zoomOut()   { state.zoom = Math.max(state.zoom / 1.2, 0.4); updateAll(); }
+function zoomReset() { state.zoom = 1; state.panX = 0; state.panY = 0; updateAll(); }
+
+document.getElementById('canvas-area').addEventListener('mousedown', e => {
+  if (e.target.closest('.zoom-btn') || e.target.closest('.legend')) return;
+  if (e.target.tagName === 'rect' || e.target.tagName === 'text') return;
+  isPanning = true;
+  panStartX = e.clientX - state.panX;
+  panStartY = e.clientY - state.panY;
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', e => {
+  if (!isPanning) return;
+  state.panX = e.clientX - panStartX;
+  state.panY = e.clientY - panStartY;
+  updateTransform();
+});
+
+window.addEventListener('mouseup', () => { isPanning = false; });
+
+document.getElementById('canvas-area').addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.92 : 1.08;
+  state.zoom = Math.max(0.4, Math.min(3, state.zoom * factor));
+  updateAll();
+}, { passive: false });
+
+function updateTransform() {
+  const g = document.getElementById('diagram-group');
+  if (g) g.setAttribute('transform', `translate(${state.panX},${state.panY}) scale(${state.zoom})`);
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+
+function updateAll() {
+  renderDiagram();
+  updatePrompt();
+  updateCommentsList();
+}
+
+function renderDiagram() {
+  const svg = document.getElementById('diagram');
+  const visibleNodes = nodes.filter(n => state.layers[n.layer]);
+  const visibleNodeIds = new Set(visibleNodes.map(n => n.id));
+  const visibleConns = connections.filter(c =>
+    state.conns[c.type] && visibleNodeIds.has(c.from) && visibleNodeIds.has(c.to)
+  );
+
+  // Build SVG
+  let defs = `<defs>`;
+  Object.entries(CONN_TYPES).forEach(([id, ct]) => {
+    defs += `<marker id="arrow-${id}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="${ct.color}"/>
+    </marker>`;
+  });
+  // Drop shadow filter
+  defs += `<filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+  </filter>`;
+  defs += `</defs>`;
+
+  let content = defs;
+  content += `<g id="diagram-group" transform="translate(${state.panX},${state.panY}) scale(${state.zoom})">`;
+
+  // Layer bands
+  const layerBands = [
+    { layer: 'browser',    y: 10,  h: 78 },
+    { layer: 'webapp',     y: 118, h: 78 },
+    { layer: 'core',       y: 228, h: 78 },
+    { layer: 'connection', y: 338, h: 168 },
+    { layer: 'hardware',   y: 528, h: 78 },
+    { layer: 'entry',      y: 118, h: 268 },
+  ];
+
+  layerBands.forEach(band => {
+    if (!state.layers[band.layer]) return;
+    const L = LAYERS[band.layer];
+    const isEntry = band.layer === 'entry';
+    const bx = isEntry ? 650 : 60;
+    const bw = isEntry ? 180 : 700;
+    content += `<rect x="${bx}" y="${band.y}" width="${bw}" height="${band.h}"
+      rx="8" fill="${L.fill}" stroke="${L.color}" stroke-width="1" opacity="0.5"/>`;
+    content += `<text x="${bx + 8}" y="${band.y + 14}" fill="${L.text}" font-size="10" opacity="0.7">${L.label}</text>`;
+  });
+
+  // Connections
+  visibleConns.forEach(c => {
+    const fromNode = nodes.find(n => n.id === c.from);
+    const toNode = nodes.find(n => n.id === c.to);
+    const ct = CONN_TYPES[c.type];
+
+    const x1 = fromNode.x + fromNode.w / 2;
+    const y1 = fromNode.y + fromNode.h / 2;
+    const x2 = toNode.x + toNode.w / 2;
+    const y2 = toNode.y + toNode.h / 2;
+
+    // Determine connection points on node edges
+    let sx, sy, ex, ey;
+    const dx = x2 - x1, dy = y2 - y1;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+
+    // Source exit point
+    if (ady > adx * 0.5) {
+      sx = x1; sy = dy > 0 ? fromNode.y + fromNode.h : fromNode.y;
+    } else {
+      sx = dx > 0 ? fromNode.x + fromNode.w : fromNode.x; sy = y1;
+    }
+    // Target entry point
+    if (ady > adx * 0.5) {
+      ex = x2; ey = dy > 0 ? toNode.y : toNode.y + toNode.h;
+    } else {
+      ex = dx > 0 ? toNode.x : toNode.x + toNode.w; ey = y2;
+    }
+
+    // Bezier curve
+    const midY = (sy + ey) / 2;
+    const cpOffset = Math.min(Math.abs(ey - sy) * 0.5, 60);
+    let path;
+    if (Math.abs(sx - ex) < 5) {
+      path = `M ${sx} ${sy} C ${sx} ${sy + cpOffset}, ${ex} ${ey - cpOffset}, ${ex} ${ey}`;
+    } else {
+      path = `M ${sx} ${sy} C ${sx} ${midY}, ${ex} ${midY}, ${ex} ${ey}`;
+    }
+
+    const dashAttr = ct.dash ? `stroke-dasharray="${ct.dash}"` : '';
+    content += `<path d="${path}" fill="none" stroke="${ct.color}" stroke-width="1.5"
+      ${dashAttr} marker-end="url(#arrow-${c.type})" opacity="0.7"/>`;
+
+    // Label
+    if (c.label) {
+      const lx = (sx + ex) / 2;
+      const ly = (sy + ey) / 2 - 6;
+      content += `<text x="${lx}" y="${ly}" fill="${ct.color}" font-size="9" text-anchor="middle" opacity="0.8" class="mono">${c.label}</text>`;
+    }
+  });
+
+  // Nodes
+  visibleNodes.forEach(n => {
+    const L = LAYERS[n.layer];
+    const hasComment = state.comments.some(c => c.target === n.id);
+    const stroke = hasComment ? '#f59e0b' : L.color;
+    const strokeW = hasComment ? 2.5 : 1.5;
+
+    content += `<g class="node" data-id="${n.id}" style="cursor:pointer" onclick="openModal('${n.id}')">`;
+    content += `<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"
+      rx="8" fill="${L.fill}" stroke="${stroke}" stroke-width="${strokeW}" filter="url(#shadow)"/>`;
+    content += `<text x="${n.x + n.w/2}" y="${n.y + 20}" fill="${L.text}"
+      font-size="12" font-weight="600" text-anchor="middle">${n.label}</text>`;
+    content += `<text x="${n.x + n.w/2}" y="${n.y + 34}" fill="${L.text}"
+      font-size="9" text-anchor="middle" opacity="0.6" class="mono">${n.subtitle}</text>`;
+    if (hasComment) {
+      content += `<circle cx="${n.x + n.w - 6}" cy="${n.y + 6}" r="5" fill="#f59e0b"/>`;
+      content += `<text x="${n.x + n.w - 6}" y="${n.y + 9.5}" fill="#000" font-size="8" font-weight="700" text-anchor="middle">!</text>`;
+    }
+    content += `</g>`;
+  });
+
+  content += `</g>`;
+  svg.innerHTML = content;
+}
+
+// ── Comments ──────────────────────────────────────────────────────────
+
+function openModal(nodeId) {
+  const node = nodes.find(n => n.id === nodeId);
+  if (!node) return;
+  state.modalTarget = nodeId;
+  document.getElementById('modal-title').textContent = node.label;
+  document.getElementById('modal-file').textContent = node.subtitle;
+  document.getElementById('modal-input').value = '';
+  document.getElementById('modal').classList.add('active');
+  setTimeout(() => document.getElementById('modal-input').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+  state.modalTarget = null;
+}
+
+function saveComment() {
+  const text = document.getElementById('modal-input').value.trim();
+  if (!text) return;
+  const node = nodes.find(n => n.id === state.modalTarget);
+  state.comments.push({
+    id: Date.now(),
+    target: state.modalTarget,
+    targetLabel: node.label,
+    targetFile: node.subtitle,
+    text
+  });
+  closeModal();
+  updateAll();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && e.ctrlKey && document.getElementById('modal').classList.contains('active')) saveComment();
+});
+
+function updateCommentsList() {
+  const el = document.getElementById('comments');
+  const heading = document.getElementById('comments-heading');
+  heading.textContent = `Comments (${state.comments.length})`;
+
+  if (state.comments.length === 0) {
+    el.innerHTML = '<div class="no-comments">Click a component to add feedback</div>';
+    return;
+  }
+
+  el.innerHTML = state.comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-target">${c.targetLabel}</div>
+      <div class="comment-file">${c.targetFile}</div>
+      <div class="comment-text">${escapeHtml(c.text)}</div>
+      <div class="comment-delete" onclick="deleteComment(${c.id})">Remove</div>
+    </div>
+  `).join('');
+}
+
+function deleteComment(id) {
+  state.comments = state.comments.filter(c => c.id !== id);
+  updateAll();
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Prompt ────────────────────────────────────────────────────────────
+
+function updatePrompt() {
+  const el = document.getElementById('prompt-text');
+
+  if (state.comments.length === 0) {
+    el.textContent = 'Add comments to components to generate a prompt.';
+    return;
+  }
+
+  const visibleLayers = Object.entries(state.layers)
+    .filter(([,v]) => v)
+    .map(([k]) => LAYERS[k].label);
+
+  let prompt = `This is the carreralib architecture`;
+  if (visibleLayers.length < Object.keys(LAYERS).length) {
+    prompt += `, focusing on: ${visibleLayers.join(', ')}`;
+  }
+  prompt += '.\n\nFeedback on specific components:\n';
+
+  state.comments.forEach(c => {
+    prompt += `\n**${c.targetLabel}** (${c.targetFile}):\n${c.text}\n`;
+  });
+
+  el.textContent = prompt;
+}
+
+function copyPrompt() {
+  const text = document.getElementById('prompt-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.classList.add('copied');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 1500);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+
+buildControls();
+updateAll();
+</script>
+</body>
+</html>
