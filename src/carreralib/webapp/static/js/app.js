@@ -17,6 +17,7 @@ class RaceApp {
         this.raceType = 'laps';
         this.lapLimit = 10;
         this.timeLimit = 600;
+        this.previousLightState = -1;
 
         // DOM Elements
         this.elements = {
@@ -42,7 +43,11 @@ class RaceApp {
             lapLimitGroup: document.getElementById('lapLimitGroup'),
             timeLimitGroup: document.getElementById('timeLimitGroup'),
             startText: document.getElementById('startText'),
-            stopText: document.getElementById('stopText')
+            stopText: document.getElementById('stopText'),
+            settingsToggle: document.getElementById('settingsToggle'),
+            settingsContent: document.getElementById('settingsContent'),
+            connectionToggle: document.getElementById('connectionToggle'),
+            connectionContent: document.getElementById('connectionContent')
         };
 
         // Bind event handlers
@@ -64,6 +69,20 @@ class RaceApp {
         this.elements.raceType.addEventListener('change', () => this.onRaceTypeChange());
         this.elements.lapLimit.addEventListener('change', () => this.saveSettings());
         this.elements.timeLimit.addEventListener('change', () => this.saveSettings());
+
+        // Collapsible panel toggles
+        this.elements.settingsToggle.addEventListener('click', () => {
+            this.togglePanel(this.elements.settingsToggle, this.elements.settingsContent);
+        });
+        this.elements.connectionToggle.addEventListener('click', () => {
+            this.togglePanel(this.elements.connectionToggle, this.elements.connectionContent);
+        });
+    }
+
+    togglePanel(toggleBtn, contentEl) {
+        const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+        toggleBtn.setAttribute('aria-expanded', !isExpanded);
+        contentEl.classList.toggle('collapsed');
     }
 
     // API Methods
@@ -146,7 +165,7 @@ class RaceApp {
         const sessionType = this.elements.sessionType.value;
         const raceType = this.elements.raceType.value;
         const lapLimit = parseInt(this.elements.lapLimit.value) || 10;
-        const timeLimit = (parseInt(this.elements.timeLimit.value) || 10) * 60; // Convert minutes to seconds
+        const timeLimit = (parseInt(this.elements.timeLimit.value) || 10) * 60;
         await this.apiCall(`/settings?session_type=${encodeURIComponent(sessionType)}&race_type=${encodeURIComponent(raceType)}&lap_limit=${lapLimit}&time_limit=${timeLimit}`);
     }
 
@@ -208,7 +227,6 @@ class RaceApp {
 
     handleWebSocketMessage(data) {
         if (data.type === 'status') {
-            // Update state variables first, before any UI updates
             this.paceCarDeployed = data.pace_car_deployed;
             this.currentStartLightState = data.start_light;
             this.raceHasStarted = data.race_has_started || false;
@@ -217,15 +235,12 @@ class RaceApp {
             this.lapLimit = data.lap_limit || 10;
             this.timeLimit = data.time_limit || 600;
 
-            // Now update UI
             this.setConnected(data.connected);
             this.updatePaceCarButton();
             this.updateStartLights(data.start_light);
             this.updateRaceButtons(data.start_light);
             this.updateStandings(data.cars);
             this.updateSettingsUI();
-        } else if (data.type === 'timer') {
-            // Timer events are already processed server-side
         }
     }
 
@@ -233,7 +248,6 @@ class RaceApp {
     setConnected(connected) {
         this.connected = connected;
 
-        // Update status indicator
         const statusDot = this.elements.connectionStatus.querySelector('.status-dot');
         const statusText = this.elements.connectionStatus.querySelector('.status-text');
 
@@ -241,19 +255,18 @@ class RaceApp {
             statusDot.classList.remove('disconnected');
             statusDot.classList.add('connected');
             statusText.textContent = 'Connected';
+            this.elements.connectionStatus.classList.add('is-connected');
         } else {
             statusDot.classList.remove('connected');
             statusDot.classList.add('disconnected');
             statusText.textContent = 'Disconnected';
+            this.elements.connectionStatus.classList.remove('is-connected');
         }
 
-        // Update connection buttons
         this.elements.btnConnect.disabled = connected;
         this.elements.btnMock.disabled = connected;
         this.elements.btnDisconnect.disabled = !connected;
 
-        // Update race buttons based on connection state
-        // Use currentStartLightState instead of hardcoded 0
         this.updateRaceButtons(this.currentStartLightState);
     }
 
@@ -263,21 +276,21 @@ class RaceApp {
 
         // Reset all lights
         lights.forEach(light => {
-            light.classList.remove('red', 'green', 'yellow', 'blink', 'blink-slow');
+            light.classList.remove('red', 'green', 'yellow', 'blink', 'blink-slow', 'pop');
         });
         lightStatus.classList.remove('go');
 
-        // Check if pace car is deployed - show blinking yellow
+        // Pace car override
         if (this.paceCarDeployed) {
             lights.forEach(light => {
                 light.classList.add('yellow', 'blink');
             });
             lightStatus.textContent = 'Pace Car Deployed';
+            this.previousLightState = -2;
             return;
         }
 
         if (state === 0) {
-            // Show blinking red if race is paused, otherwise empty
             if (this.raceHasStarted) {
                 lights.forEach(light => {
                     light.classList.add('red', 'blink');
@@ -287,25 +300,27 @@ class RaceApp {
                 lightStatus.textContent = '';
             }
         } else if (state >= 1 && state <= 5) {
-            // Red lights countdown
             for (let i = 0; i < state; i++) {
                 lights[i].classList.add('red');
+                // Pop animation on newly lit light
+                if (state > this.previousLightState && i === state - 1) {
+                    lights[i].classList.add('pop');
+                }
             }
             lightStatus.textContent = `Countdown: ${6 - state}`;
         } else if (state === 6) {
-            // All red lights
             lights.forEach(light => light.classList.add('red'));
             lightStatus.textContent = 'GET READY!';
         } else if (state === 7) {
-            // Green light - GO!
             lights.forEach(light => light.classList.add('green'));
             lightStatus.textContent = 'GO! GO! GO!';
             lightStatus.classList.add('go');
         } else if (state >= 8) {
-            // Race in progress - slow blinking green lights
             lights.forEach(light => light.classList.add('green', 'blink-slow'));
             lightStatus.textContent = 'Race in progress';
         }
+
+        this.previousLightState = state;
     }
 
     updateStandings(cars) {
@@ -314,15 +329,67 @@ class RaceApp {
             return;
         }
 
-        const html = cars.map((car, index) => {
+        const list = this.elements.standingsList;
+        const existingRows = list.querySelectorAll('.car-row');
+        const existingByAddr = {};
+        existingRows.forEach(row => {
+            existingByAddr[row.dataset.address] = row;
+        });
+
+        // Remove no-data placeholder
+        const noData = list.querySelector('.no-data');
+        if (noData) noData.remove();
+
+        const fragment = document.createDocumentFragment();
+        const seenAddresses = new Set();
+
+        cars.forEach((car, index) => {
+            seenAddresses.add(String(car.address));
             const positionClass = index === 0 ? 'p1' : index === 1 ? 'p2' : index === 2 ? 'p3' : '';
             const fuelPercent = (car.fuel / 15) * 100;
             const fuelClass = fuelPercent <= 20 ? 'critical' : fuelPercent <= 40 ? 'low' : '';
             const lastLap = car.last_lap_time > 0 ? this.formatTime(car.last_lap_time) : '--:--.---';
             const bestLap = car.best_lap_time > 0 ? this.formatTime(car.best_lap_time) : '--:--.---';
 
-            return `
-                <div class="car-row" data-address="${car.address}">
+            let row = existingByAddr[String(car.address)];
+
+            if (row) {
+                // Update existing row in place
+                const posEl = row.querySelector('.car-position');
+                posEl.textContent = car.position;
+                posEl.className = `car-position ${positionClass}`;
+
+                // Update position border
+                row.className = `car-row ${index === 0 ? 'pos-1' : index === 1 ? 'pos-2' : index === 2 ? 'pos-3' : ''}`;
+
+                row.querySelector('.car-name').textContent = `Car ${car.address + 1}`;
+
+                const stats = row.querySelectorAll('.car-stats span');
+                stats[0].textContent = `Lap ${car.laps}`;
+                stats[1].textContent = `Last: ${lastLap}`;
+                stats[2].textContent = `Best: ${bestLap}`;
+
+                const fuelLevel = row.querySelector('.fuel-level');
+                fuelLevel.style.width = `${fuelPercent}%`;
+                fuelLevel.className = `fuel-level ${fuelClass}`;
+
+                const pitEl = row.querySelector('.pit-indicator');
+                if (car.in_pit && !pitEl) {
+                    const pit = document.createElement('span');
+                    pit.className = 'pit-indicator';
+                    pit.textContent = 'PIT';
+                    row.querySelector('.car-fuel').prepend(pit);
+                } else if (!car.in_pit && pitEl) {
+                    pitEl.remove();
+                }
+
+                fragment.appendChild(row);
+            } else {
+                // Create new row
+                row = document.createElement('div');
+                row.className = `car-row ${index === 0 ? 'pos-1' : index === 1 ? 'pos-2' : index === 2 ? 'pos-3' : ''}`;
+                row.dataset.address = car.address;
+                row.innerHTML = `
                     <div class="car-position ${positionClass}">${car.position}</div>
                     <div class="car-info">
                         <div class="car-name">Car ${car.address + 1}</div>
@@ -338,11 +405,20 @@ class RaceApp {
                             <div class="fuel-level ${fuelClass}" style="width: ${fuelPercent}%"></div>
                         </div>
                     </div>
-                </div>
-            `;
-        }).join('');
+                `;
+                fragment.appendChild(row);
+            }
+        });
 
-        this.elements.standingsList.innerHTML = html;
+        // Remove rows for cars no longer present
+        existingRows.forEach(row => {
+            if (!seenAddresses.has(row.dataset.address)) {
+                row.remove();
+            }
+        });
+
+        list.innerHTML = '';
+        list.appendChild(fragment);
     }
 
     updatePaceCarButton() {
@@ -358,14 +434,12 @@ class RaceApp {
     }
 
     updateSettingsUI() {
-        // Sync dropdowns and inputs with server state
         if (this.elements.sessionType.value !== this.sessionType) {
             this.elements.sessionType.value = this.sessionType;
         }
         if (this.elements.raceType.value !== this.raceType) {
             this.elements.raceType.value = this.raceType;
         }
-        // Convert seconds to minutes for display
         const timeLimitMinutes = Math.round(this.timeLimit / 60);
         if (parseInt(this.elements.lapLimit.value) !== this.lapLimit) {
             this.elements.lapLimit.value = this.lapLimit;
@@ -374,17 +448,14 @@ class RaceApp {
             this.elements.timeLimit.value = timeLimitMinutes;
         }
 
-        // Update visibility based on race type
         this.updateRaceTypeVisibility();
 
-        // Disable settings when race is in progress
         const raceInProgress = this.raceHasStarted || this.currentStartLightState > 0;
         this.elements.sessionType.disabled = raceInProgress;
         this.elements.raceType.disabled = raceInProgress;
         this.elements.lapLimit.disabled = raceInProgress;
         this.elements.timeLimit.disabled = raceInProgress;
 
-        // Update button labels based on session type
         this.updateButtonLabels();
     }
 
@@ -406,7 +477,6 @@ class RaceApp {
         const { btnStart, btnPause, btnStop, btnPaceCar, pauseText, raceButtonGroup } = this.elements;
 
         if (!this.connected) {
-            // All disabled and hidden when not connected
             btnStart.disabled = true;
             btnPause.disabled = true;
             btnStop.disabled = true;
@@ -414,12 +484,10 @@ class RaceApp {
             btnStart.classList.add('hidden');
             raceButtonGroup.classList.add('hidden');
         } else if (startLightState === 0 && !this.raceHasStarted) {
-            // Not started yet - only show big Start Race button
             btnStart.classList.remove('hidden');
             btnStart.disabled = false;
             raceButtonGroup.classList.add('hidden');
         } else if (startLightState === 0 && this.raceHasStarted) {
-            // Paused - show Resume and Stop (no Pace Car when paused)
             btnStart.classList.add('hidden');
             raceButtonGroup.classList.remove('hidden');
             btnPause.disabled = false;
@@ -428,7 +496,6 @@ class RaceApp {
             btnPaceCar.classList.add('hidden');
             btnPaceCar.disabled = true;
         } else {
-            // Race in progress (countdown, green, or racing) - show Pause, Stop, Pace Car
             btnStart.classList.add('hidden');
             raceButtonGroup.classList.remove('hidden');
             btnPause.disabled = false;

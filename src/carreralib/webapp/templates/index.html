@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a1a2e">
+    <meta name="theme-color" content="#09090b">
     <meta name="description" content="Carrera Race Management System">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Carrera Race Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/static/icons/icon-192.svg">
@@ -17,7 +20,7 @@
     <div class="app">
         <!-- Header -->
         <header class="header">
-            <h1>Carrera Race Management</h1>
+            <h1>Carrera RMS</h1>
             <div class="connection-status" id="connectionStatus">
                 <span class="status-dot disconnected"></span>
                 <span class="status-text">Disconnected</span>
@@ -28,34 +31,45 @@
         <main class="main">
             <!-- Start Lights Panel -->
             <section class="panel lights-panel">
-                <h2>Start Lights</h2>
-                <div class="start-lights" id="startLights">
-                    <div class="light" data-light="1"></div>
-                    <div class="light" data-light="2"></div>
-                    <div class="light" data-light="3"></div>
-                    <div class="light" data-light="4"></div>
-                    <div class="light" data-light="5"></div>
+                <div class="lights-housing">
+                    <div class="start-lights" id="startLights">
+                        <div class="light-unit">
+                            <div class="light-recess"><div class="light" data-light="1"></div></div>
+                        </div>
+                        <div class="light-unit">
+                            <div class="light-recess"><div class="light" data-light="2"></div></div>
+                        </div>
+                        <div class="light-unit">
+                            <div class="light-recess"><div class="light" data-light="3"></div></div>
+                        </div>
+                        <div class="light-unit">
+                            <div class="light-recess"><div class="light" data-light="4"></div></div>
+                        </div>
+                        <div class="light-unit">
+                            <div class="light-recess"><div class="light" data-light="5"></div></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="light-status" id="lightStatus">Waiting...</div>
             </section>
 
             <!-- Race Controls Panel -->
             <section class="panel controls-panel">
-                <button id="btnStart" class="btn btn-success btn-xlarge" disabled>
-                    <span class="btn-icon">▶</span>
+                <button id="btnStart" class="btn btn-start btn-xlarge" disabled>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M8 5v14l11-7z"/></svg>
                     <span id="startText">Start Race</span>
                 </button>
                 <div class="button-group race-buttons hidden" id="raceButtonGroup">
                     <button id="btnPaceCar" class="btn btn-info btn-large" disabled>
-                        <span class="btn-icon">🚗</span>
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
                         <span id="paceCarText">Deploy Pace Car</span>
                     </button>
                     <button id="btnPause" class="btn btn-warning btn-large" disabled>
-                        <span class="btn-icon">⏸</span>
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                         <span id="pauseText">Pause Race</span>
                     </button>
                     <button id="btnStop" class="btn btn-danger btn-large" disabled>
-                        <span class="btn-icon">⏹</span>
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 6h12v12H6z"/></svg>
                         <span id="stopText">Stop Race</span>
                     </button>
                 </div>
@@ -65,58 +79,67 @@
             <section class="panel standings-panel">
                 <h2>Standings</h2>
                 <div class="standings-list" id="standingsList">
-                    <!-- Car standings will be populated here -->
                     <div class="no-data">Connect to see race standings</div>
                 </div>
             </section>
 
-            <!-- Settings Panel -->
-            <section class="panel settings-panel">
-                <h2>Session Settings</h2>
-                <div class="settings-grid">
-                    <div class="setting-group">
-                        <label for="sessionType">Session Type</label>
-                        <select id="sessionType" class="select-input">
-                            <option value="R" selected>Race</option>
-                            <option value="Q">Qualifying</option>
-                            <option value="FP">Free Practice</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label for="raceType">Race Type</label>
-                        <select id="raceType" class="select-input">
-                            <option value="laps" selected>Lap Race</option>
-                            <option value="timed">Timed Race</option>
-                        </select>
-                    </div>
-                    <div class="setting-group" id="lapLimitGroup">
-                        <label for="lapLimit">Number of Laps</label>
-                        <input type="number" id="lapLimit" class="number-input" value="10" min="1" max="999">
-                    </div>
-                    <div class="setting-group hidden" id="timeLimitGroup">
-                        <label for="timeLimit">Race Duration (minutes)</label>
-                        <input type="number" id="timeLimit" class="number-input" value="10" min="1" max="999">
+            <!-- Settings Panel (Collapsible) -->
+            <section class="panel collapsible-panel" id="settingsPanel">
+                <button class="panel-toggle" id="settingsToggle" aria-expanded="false">
+                    <h2>Session Settings</h2>
+                    <svg class="toggle-chevron" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </button>
+                <div class="panel-content collapsed" id="settingsContent">
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <label for="sessionType">Session Type</label>
+                            <select id="sessionType" class="select-input">
+                                <option value="R" selected>Race</option>
+                                <option value="Q">Qualifying</option>
+                                <option value="FP">Free Practice</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="raceType">Race Type</label>
+                            <select id="raceType" class="select-input">
+                                <option value="laps" selected>Lap Race</option>
+                                <option value="timed">Timed Race</option>
+                            </select>
+                        </div>
+                        <div class="setting-group" id="lapLimitGroup">
+                            <label for="lapLimit">Number of Laps</label>
+                            <input type="number" id="lapLimit" class="number-input" value="10" min="1" max="999">
+                        </div>
+                        <div class="setting-group hidden" id="timeLimitGroup">
+                            <label for="timeLimit">Race Duration (minutes)</label>
+                            <input type="number" id="timeLimit" class="number-input" value="10" min="1" max="999">
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Connection Panel -->
-            <section class="panel connection-panel">
-                <h2>Connection</h2>
-                <div class="input-group">
-                    <input type="text" id="deviceUrl" placeholder="socket://localhost:5000" value="socket://localhost:5000">
-                </div>
-                <div class="button-group">
-                    <button id="btnConnect" class="btn btn-primary">Connect</button>
-                    <button id="btnDisconnect" class="btn btn-secondary" disabled>Disconnect</button>
-                    <button id="btnMock" class="btn btn-secondary">Use Mock</button>
+            <!-- Connection Panel (Collapsible) -->
+            <section class="panel collapsible-panel" id="connectionPanel">
+                <button class="panel-toggle" id="connectionToggle" aria-expanded="false">
+                    <h2>Connection</h2>
+                    <svg class="toggle-chevron" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </button>
+                <div class="panel-content collapsed" id="connectionContent">
+                    <div class="input-group">
+                        <input type="text" id="deviceUrl" placeholder="socket://localhost:5000" value="socket://localhost:5000">
+                    </div>
+                    <div class="button-group">
+                        <button id="btnConnect" class="btn btn-primary">Connect</button>
+                        <button id="btnDisconnect" class="btn btn-secondary" disabled>Disconnect</button>
+                        <button id="btnMock" class="btn btn-ghost">Use Mock</button>
+                    </div>
                 </div>
             </section>
         </main>
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Carrera Race Management v1.0 | <a href="https://github.com/gregthebellringer/carreralib">carreralib</a></p>
+            <p>Carrera RMS v1.0 | <a href="https://github.com/gregthebellringer/carreralib">carreralib</a></p>
         </footer>
     </div>
 
